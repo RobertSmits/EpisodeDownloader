@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Diagnostics;
 using VrtNuDownloader.Models;
-using System.Text.RegularExpressions;
 using System.Linq;
 
 namespace VrtNuDownloader
@@ -18,11 +17,12 @@ namespace VrtNuDownloader
         const string CHECK_FILE = "done.txt";
         static readonly string WATCH_FILE_PATH = Path.Combine(CONFIG_DIR, WATCH_FILE);
         static readonly string CHECK_FILE_PATH = Path.Combine(CONFIG_DIR, CHECK_FILE);
+        static FileHelper fileHelper = new FileHelper();
 
         static void Main(string[] args)
         {
-            EnsureFolderExists(DOWNLOAD_DIR);
-            EnsureFolderExists(CONFIG_DIR);
+            fileHelper.EnsureFolderExists(DOWNLOAD_DIR);
+            fileHelper.EnsureFolderExists(CONFIG_DIR);
             if (!File.Exists(WATCH_FILE_PATH)) File.Create(WATCH_FILE_PATH).Dispose();
             if (!File.Exists(CHECK_FILE_PATH)) File.Create(CHECK_FILE_PATH).Dispose();
 
@@ -84,19 +84,33 @@ namespace VrtNuDownloader
             var episodes = doc.DocumentNode.SelectNodes("//li//a");
             foreach (var episode in episodes)
             {
-                DownloadEpisode(episode);
+                DownloadEpisode(episode.Attributes["href"].Value);
             }
         }
 
-        private static void DownloadEpisode(HtmlNode episode)
+        private static void DownloadEpisode(string episodeUrl)
         {
-            // Handle each episode URL
-            var episodeURL = "https://www.vrt.be" + episode.Attributes["href"].Value;
-
-            // Create content.json URL
+            // Get Episode Info
+            var episodeURL = "https://www.vrt.be" + episodeUrl;
             var contentJsonURL = episodeURL.Remove(episodeURL.Length - 1) + ".content.json";
             var contentJson = new WebClient().DownloadString(contentJsonURL);
             var VC = JsonConvert.DeserializeObject<VRTContentJson>(contentJson);
+            if (AlreadyDownloaded(VC.name))
+            {
+                Console.WriteLine("Already downloaded, skipping...");
+                return;
+            }
+
+            // Get Episode Streams
+            var pbsPubURL = $"https://mediazone.vrt.be/api/v1/vrtvideo/assets/{VC.publicationId}${VC.videoId}";
+            var pbsPubJson = new WebClient().DownloadString(pbsPubURL);
+            var VP = JsonConvert.DeserializeObject<VRTPbsPub>(pbsPubJson);
+            var episodeDownloadURL = VP.targetUrls.FirstOrDefault(x => x.type == "HLS")?.url;
+            if (episodeDownloadURL == null)
+            {
+                Console.WriteLine("Couldn't find a valid M3U8");
+                return;
+            }
 
             var filename = VC.programTitle;
             if (Int32.TryParse(VC.seasonTitle, out int seasonNr))
@@ -109,29 +123,13 @@ namespace VrtNuDownloader
                 filename += ($" - S{VC.seasonTitle:00}E{VC.episodeNumber} - {VC.title}.mp4");
             }
 
-            var folderName = Path.Combine(DOWNLOAD_DIR, MakeValidFolderName(VC.programTitle));
-            EnsureFolderExists(folderName);
-            filename = Path.Combine(folderName, MakeValidFileName(filename));
+            var filePath = Path.Combine(DOWNLOAD_DIR, fileHelper.MakeValidFolderName(VC.programTitle));
+            fileHelper.EnsureFolderExists(filePath);
+            filePath = Path.Combine(filePath, fileHelper.MakeValidFileName(filename));
 
-            // Create pbs-pub URL
-            string pbsPubURL = $"https://mediazone.vrt.be/api/v1/vrtvideo/assets/{VC.publicationId}${VC.videoId}";
-            string pbsPubJson = new WebClient().DownloadString(pbsPubURL);
-
-            // Handle JSON
-            VRTPbsPub VP = JsonConvert.DeserializeObject<VRTPbsPub>(pbsPubJson);
-            string episodeDownloadURL = VP.targetUrls.FirstOrDefault(x => x.type == "HLS")?.url;
-            if (episodeDownloadURL == null)
-            {
-                Console.WriteLine("Couldn't find a valid M3U8");
-                return;
-            }
-
-            // Episode download URL found
-            if (AlreadyDownloaded(VC.name))
-                Console.WriteLine("Already downloaded, skipping...");
-            else
-                DownloadEpisode(episodeDownloadURL, filename, VC.name);
-
+            Console.WriteLine($"Downloading {VC.name}");
+            if (DownloadEpisode(episodeDownloadURL, filePath))
+                File.AppendAllLines(CHECK_FILE_PATH, new[] { VC.name });
         }
 
         private static bool AlreadyDownloaded(string slug)
@@ -147,14 +145,18 @@ namespace VrtNuDownloader
             return false;
         }
 
-        private static void DownloadEpisode(string downloadURL, string filename, string slug)
+        private static bool DownloadEpisode(string downloadURL, string filename)
         {
             Process p = new Process();
             p.StartInfo.FileName = "ffmpeg";
             p.StartInfo.Arguments = $"-i \"{downloadURL}\" -c copy \"{filename}\"";
             p.StartInfo.RedirectStandardError = true;
             p.StartInfo.UseShellExecute = false;
-            if (!p.Start()) Console.WriteLine("Error downloading episode");
+            if (!p.Start())
+            {
+                Console.WriteLine("Error downloading episode");
+                return false;
+            }
             StreamReader r = p.StandardError;
             string line;
             bool firstDuration = false;
@@ -167,39 +169,20 @@ namespace VrtNuDownloader
                     time = line.Replace(", start: 0.000000, bitrate: N/A", "").Replace("  ", "").Replace(", start: 0.000000, bitrate: 0 kb/s", "").Replace("Duration: ", "");
                     Console.WriteLine("Lengte aflevering: " + time);
                 }
-                //if (line.Contains("time="))
-                //{
-                //    Console.Clear();
-                //    line = line.Substring(line.IndexOf("time=") + 5);
-                //    string[] outputLines = line.Split(' ');
-                //    line = outputLines[0];
-                //    Console.WriteLine("Downloading: " + filename);
-                //    Console.WriteLine("Progress: " + line + "/" + time);
-                //    Console.WriteLine("Saving as: Downloads/" + filename);
-                //}
+                if (line.Contains("time="))
+                {
+                    Console.Clear();
+                    line = line.Substring(line.IndexOf("time=") + 5);
+                    string[] outputLines = line.Split(' ');
+                    line = outputLines[0];
+                    Console.WriteLine("Downloading: " + filename);
+                    Console.WriteLine("Progress: " + line + "/" + time);
+                    Console.WriteLine("Saving as: Downloads/" + filename);
+                }
             }
             p.Close();
             Console.WriteLine("Done downloading " + filename);
-            File.AppendAllText(CHECK_FILE_PATH, slug + Environment.NewLine);
-        }
-
-        private static void EnsureFolderExists(string folderName)
-        {
-            if (!Directory.Exists(folderName)) Directory.CreateDirectory(folderName);
-        }
-
-        private static string MakeValidFileName(string name)
-        {
-            string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
-            string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
-            return Regex.Replace(name, invalidRegStr, "_");
-        }
-
-        private static string MakeValidFolderName(string name)
-        {
-            string invalidChars = Regex.Escape(new string(Path.GetInvalidPathChars()));
-            string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
-            return Regex.Replace(name, invalidRegStr, "_");
+            return true;
         }
     }
 }
