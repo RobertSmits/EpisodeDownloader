@@ -1,6 +1,6 @@
 ﻿namespace VrtNuDownloader.Models
 {
-    class MetaInfo
+    public class MetaInfo
     {
         public string allowedRegion { get; set; }
         public string ageCategory { get; set; }

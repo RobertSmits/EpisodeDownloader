@@ -6,8 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HtmlAgilityPack" Version="1.8.4" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.8.5" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Unity" Version="5.8.6" />
   </ItemGroup>
 
 </Project>

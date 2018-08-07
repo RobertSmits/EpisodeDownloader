@@ -2,7 +2,7 @@
 
 namespace VrtNuDownloader.Models
 {
-    class VRTContentJson
+    public class VrtContent
     {
         public string title { get; set; }
         public string name { get; set; }

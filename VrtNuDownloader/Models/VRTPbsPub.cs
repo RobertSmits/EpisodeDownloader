@@ -2,7 +2,7 @@
 
 namespace VrtNuDownloader.Models
 {
-    class VRTPbsPub
+    public  class VrtPbsPub
     {
         public string title { get; set; }
         public string description { get; set; }
