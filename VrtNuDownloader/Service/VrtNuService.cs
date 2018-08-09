@@ -26,8 +26,16 @@ namespace VrtNuDownloader.Service
         {
             HtmlWeb web = new HtmlWeb();
             HtmlDocument html = web.Load(showUri);
-            return html.GetElementbyId("seasons-list")
-                ?.SelectNodes(".//li//a")
+            var seasonSelectOIptions = html.DocumentNode.SelectNodes("//*[@class=\"vrt-labelnav\"]")[0]
+                    ?.SelectNodes(".//li//a");
+
+            if (seasonSelectOIptions.Count == 1) {
+                return new List<Uri> {
+                    new Uri(showUri.AbsoluteUri.Replace(".relevant/", "") + seasonSelectOIptions[0].InnerHtml.Replace("Seizoen ", "/") + ".lists.all-episodes/")
+                };
+            }
+
+            return seasonSelectOIptions
                 .Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
                 .OrderBy(x => x.AbsoluteUri)
                 .ToList();

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using VrtNuDownloader.Models;
@@ -14,18 +13,27 @@ namespace VrtNuDownloader
         private readonly ILogService _logService;
         private readonly IHistoryService _historyService;
         private readonly IFileService _fileService;
-        
-        public EpisodeDownloader(IVrtNuService vrtNuService, ILogService logService, IHistoryService historyService, IFileService fileService)
+        private readonly IFfmpegService _ffmpegService;
+
+        public EpisodeDownloader
+            (
+                IVrtNuService vrtNuService,
+                ILogService logService,
+                IHistoryService historyService,
+                IFileService fileService,
+                IFfmpegService ffmpegService
+            )
         {
             _vrtNuService = vrtNuService;
             _logService = logService;
             _historyService = historyService;
             _fileService = fileService;
+            _ffmpegService = ffmpegService;
         }
-        
+
         public void Run(IEnumerable<Uri> ShowUris)
         {
-            foreach(var showUri in ShowUris)
+            foreach (var showUri in ShowUris)
             {
                 _logService.WriteLog("Current show: " + showUri);
                 var seasons = _vrtNuService.GetShowSeasons(showUri);
@@ -45,13 +53,17 @@ namespace VrtNuDownloader
                     }
                     foreach (var episode in episodes)
                     {
-                        DownloadEpisode(episode);
+                        var status = DownloadEpisode(episode);
+                        if (status == -1) _logService.WriteLog("Already downloaded, skipped");
+                        if (status == 1) _logService.WriteLog("Couldn't find a valid M3U8");
+                        if (status == 2) _logService.WriteLog("Error running ffmpeg");
+                        if (status == 0) _logService.WriteLog("Downnload Finished");                            
                     }
                 }
             }
         }
 
-        private string CreateFileName(VrtContent episodeInfo)
+        private string GetFileName(VrtContent episodeInfo)
         {
             var filename = episodeInfo.programTitle;
             if (Int32.TryParse(episodeInfo.seasonTitle, out int seasonNr))
@@ -66,87 +78,26 @@ namespace VrtNuDownloader
             return filename;
         }
 
-        private void DownloadEpisode(Uri episodeUri)
+        private int DownloadEpisode(Uri episodeUri)
         {
             var episodeInfo = _vrtNuService.GetEpisodeInfo(episodeUri);
-            if (_historyService.CheckIfDownloaded(episodeInfo.name))
-            {
-                _logService.WriteLog("Already downloaded, skipping...");
-                return;
-            }
+            if (_historyService.CheckIfDownloaded(episodeInfo.name)) return -1;
 
-            var episodeDownloadURL = _vrtNuService.GetPublishInfo(episodeInfo.publicationId, episodeInfo.videoId)
-                .targetUrls.FirstOrDefault(x => x.type == "HLS")?.url;
+            var episodeDownloadUri = _vrtNuService.GetPublishInfo(episodeInfo.publicationId, episodeInfo.videoId)
+                .targetUrls.Where(x => x.type == "HLS")
+                .Select(x => new Uri(x.url)).FirstOrDefault();
 
-            if (episodeDownloadURL == null)
-            {
-                _logService.WriteLog("Couldn't find a valid M3U8");
-                return;
-            }
+            if (episodeDownloadUri == null) return 1;
 
-            var filename = CreateFileName(episodeInfo);
+            var filename = GetFileName(episodeInfo);
             var filePath = Path.Combine(_fileService.DownloadDir, _fileService.MakeValidFolderName(episodeInfo.programTitle));
             _fileService.EnsureFolderExists(filePath);
             filePath = Path.Combine(filePath, _fileService.MakeValidFileName(filename));
 
             _logService.WriteLog($"Downloading {episodeInfo.name}");
-            if (DownloadEpisode(episodeDownloadURL, filePath))
-                _historyService.AddDownloaded(episodeInfo.name);
-        }
-
-        private bool DownloadEpisode(string downloadURL, string filename)
-        {
-            Process p = new Process();
-            p.StartInfo.FileName = "ffmpeg";
-            p.StartInfo.Arguments = $"-i \"{downloadURL}\" -c copy \"{filename}\"";
-            p.StartInfo.RedirectStandardError = true;
-            p.StartInfo.UseShellExecute = false;
-            if (!p.Start())
-            {
-                _logService.WriteLog("Error downloading episode");
-                return false;
-            }
-            StreamReader r = p.StandardError;
-            string line;
-
-
-            while ((line = r.ReadLine()) != null)
-            {
-                if (line.Contains("Duration: "))
-                {
-                    var time = line.Replace(", start: 0.000000, bitrate: N/A", "").Replace("  ", "").Replace(", start: 0.000000, bitrate: 0 kb/s", "").Replace("Duration: ", "");
-                    _logService.WriteLog("Lengte aflevering: " + time);
-                    //break;
-                }
-            }
-            p.WaitForExit();
-            _logService.WriteLog("Done downloading " + filename);
-            return p.ExitCode == 0;
-
-
-            //bool firstDuration = false;
-            //while ((line = r.ReadLine()) != null)
-            //{
-            //    var time = string.Empty;
-            //    if (line.Contains("Duration: ") && !firstDuration)
-            //    {
-            //        firstDuration = true;
-            //        time = line.Replace(", start: 0.000000, bitrate: N/A", "").Replace("  ", "").Replace(", start: 0.000000, bitrate: 0 kb/s", "").Replace("Duration: ", "");
-            //        _logService.WriteLog("Lengte aflevering: " + time);
-            //    }
-            //    if (line.Contains("time="))
-            //    {
-            //        Console.Clear();
-            //        line = line.Substring(line.IndexOf("time=") + 5);
-            //        string[] outputLines = line.Split(' ');
-            //        line = outputLines[0];
-            //        _logService.WriteLog("Downloading: " + filename);
-            //        _logService.WriteLog("Progress: " + line + "/" + time);
-            //    }
-            //}
-            p.WaitForExit();
-            _logService.WriteLog("Done downloading " + filename);
-            return p.ExitCode == 0;
+            var processOutput = _ffmpegService.DownloadEpisode(episodeDownloadUri, filePath);
+            if (processOutput) _historyService.AddDownloaded(episodeInfo.name);
+            return processOutput ? 0 : 2;
         }
     }
 }
