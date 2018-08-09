@@ -11,32 +11,34 @@ namespace VrtNuDownloader.Service
 {
     public class VrtNuService : IVrtNuService
     {
+        public List<Uri> GetShowSeasons(Uri showUri)
+        {
+            HtmlWeb web = new HtmlWeb();
+            HtmlDocument html = web.Load(showUri);
+            var seasonSelectOIptions = html.DocumentNode.SelectNodes("//*[@class=\"vrt-labelnav\"]")
+                ?.FirstOrDefault()
+                ?.SelectNodes(".//li//a");
+
+            if ((seasonSelectOIptions?.Count ?? 0)  <= 1)
+            {
+                return new List<Uri> { showUri };
+                //return new List<Uri> {
+                //    new Uri(showUri.AbsoluteUri.Replace(".relevant/", "") + seasonSelectOIptions[0].InnerHtml.Replace("Seizoen ", "/") + ".lists.all-episodes/")
+                //};
+            }
+
+            return seasonSelectOIptions
+                .Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
+                .OrderBy(x => x.AbsoluteUri)
+                .ToList();
+        }
         public List<Uri> GetShowSeasonEpisodes(Uri seasonUri)
         {
             HtmlWeb web = new HtmlWeb();
             HtmlDocument html = web.Load(seasonUri);
             return html.DocumentNode.SelectSingleNode("//ul[@aria-labelledby='episodelist-title']")
                 ?.SelectNodes(".//li//a")
-                .Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
-                .OrderBy(x => x.AbsoluteUri)
-                .ToList();
-        }
-
-        public List<Uri> GetShowSeasons(Uri showUri)
-        {
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument html = web.Load(showUri);
-            var seasonSelectOIptions = html.DocumentNode.SelectNodes("//*[@class=\"vrt-labelnav\"]")[0]
-                    ?.SelectNodes(".//li//a");
-
-            if (seasonSelectOIptions.Count == 1) {
-                return new List<Uri> {
-                    new Uri(showUri.AbsoluteUri.Replace(".relevant/", "") + seasonSelectOIptions[0].InnerHtml.Replace("Seizoen ", "/") + ".lists.all-episodes/")
-                };
-            }
-
-            return seasonSelectOIptions
-                .Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
+                ?.Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
                 .OrderBy(x => x.AbsoluteUri)
                 .ToList();
         }
