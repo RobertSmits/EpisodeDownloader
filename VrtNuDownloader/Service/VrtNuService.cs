@@ -32,6 +32,7 @@ namespace VrtNuDownloader.Service
                 .OrderBy(x => x.AbsoluteUri)
                 .ToList();
         }
+
         public List<Uri> GetShowSeasonEpisodes(Uri seasonUri)
         {
             HtmlWeb web = new HtmlWeb();

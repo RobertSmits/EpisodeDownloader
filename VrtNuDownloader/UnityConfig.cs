@@ -13,6 +13,7 @@ namespace VrtNuDownloader
             container.RegisterType<IVrtNuService, VrtNuService>();
             container.RegisterType<IFfmpegService, FfmpegService>();
             container.RegisterType<IHistoryService, HistoryService>();
+            container.RegisterType<IDatabaseService, DatabaseService>();
         }
         private static Lazy<IUnityContainer> container =
           new Lazy<IUnityContainer>(() =>

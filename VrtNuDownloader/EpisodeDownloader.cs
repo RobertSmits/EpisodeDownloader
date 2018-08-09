@@ -53,7 +53,7 @@ namespace VrtNuDownloader
                     }
                     foreach (var episode in episodes)
                     {
-                        var status = DownloadEpisode(episode);
+                        var status = _historyService.CheckIfDownloaded(episode) ? -1 : DownloadEpisode(episode);
                         if (status == -1) _logService.WriteLog("Already downloaded, skipped");
                         if (status == 1) _logService.WriteLog("Couldn't find a valid M3U8");
                         if (status == 2) _logService.WriteLog("Error running ffmpeg");
@@ -81,14 +81,13 @@ namespace VrtNuDownloader
         private int DownloadEpisode(Uri episodeUri)
         {
             var episodeInfo = _vrtNuService.GetEpisodeInfo(episodeUri);
-            if (_historyService.CheckIfDownloaded(episodeInfo.name)) return -1;
-
             var episodeDownloadUri = _vrtNuService.GetPublishInfo(episodeInfo.publicationId, episodeInfo.videoId)
                 .targetUrls.Where(x => x.type == "HLS")
                 .Select(x => new Uri(x.url)).FirstOrDefault();
-
             if (episodeDownloadUri == null) return 1;
-
+#if CHECK_EP_NAME
+            if (_historyService.CheckIfDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri)) return -1;
+#endif
             var filename = GetFileName(episodeInfo);
             var filePath = Path.Combine(_fileService.DownloadDir, _fileService.MakeValidFolderName(episodeInfo.programTitle));
             _fileService.EnsureFolderExists(filePath);
@@ -96,7 +95,7 @@ namespace VrtNuDownloader
 
             _logService.WriteLog($"Downloading {episodeInfo.name}");
             var processOutput = _ffmpegService.DownloadEpisode(episodeDownloadUri, filePath);
-            if (processOutput) _historyService.AddDownloaded(episodeInfo.name);
+            if (processOutput) _historyService.AddDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri);
             return processOutput ? 0 : 2;
         }
     }
