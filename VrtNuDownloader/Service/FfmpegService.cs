@@ -21,13 +21,12 @@ namespace VrtNuDownloader.Service
                 {
                     var time = line.Split(",")[0].Replace("  Duration: ", "");
                     Console.WriteLine("Lengte aflevering: " + time);
-                    //break;
                 }
-                if (line.Contains("time="))
-                {
-                    var progress = line.Substring(line.IndexOf("time=") + 5).Split(" ")[0];
-                    Console.WriteLine("Progress: " + progress);
-                }
+                //if (line.Contains("time="))
+                //{
+                //    var progress = line.Substring(line.IndexOf("time=") + 5).Split(" ")[0];
+                //    Console.WriteLine("Progress: " + progress);
+                //}
             }
             p.WaitForExit();
             return p.ExitCode == 0;
