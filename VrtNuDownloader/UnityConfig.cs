@@ -12,6 +12,7 @@ namespace VrtNuDownloader
             container.RegisterType<IFileService, FileService>();
             container.RegisterType<IVrtNuService, VrtNuService>();
             container.RegisterType<IFfmpegService, FfmpegService>();
+            container.RegisterType<IConfigService, ConfigService>();
             container.RegisterType<IHistoryService, HistoryService>();
             container.RegisterType<IDatabaseService, DatabaseService>();
         }

@@ -2,6 +2,13 @@
 {
     public interface ILogService
     {
-        void WriteLog(string message);
+        void WriteLog(MessageType type, string message);
+    }
+
+    public enum MessageType
+    {
+        Info,
+        Error,
+        Warn
     }
 }

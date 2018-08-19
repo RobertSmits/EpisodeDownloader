@@ -5,9 +5,10 @@ namespace VrtNuDownloader.Service
 {
     public class LogService : ILogService
     {
-        public void WriteLog(string message)
+        public void WriteLog(MessageType type, string message)
         {
-            Console.WriteLine(message);
+            var time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff");
+            Console.WriteLine($"{time}|{type.ToString().PadRight(6)}|   |{message}");
         }
     }
 }
