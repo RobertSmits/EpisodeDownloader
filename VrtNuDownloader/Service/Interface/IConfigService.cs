@@ -4,6 +4,9 @@ namespace VrtNuDownloader.Service.Interface
 {
     public interface IConfigService
     {
+        string Email { get; }
+        string Password { get; }
+
         string DownloadPath { get; }
         string SavePath { get; }
         bool SaveShowsInFolders { get; }

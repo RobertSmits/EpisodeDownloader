@@ -11,6 +11,23 @@ namespace VrtNuDownloader.Service
 {
     public class VrtNuService : IVrtNuService
     {
+        private VrtPlayerToken _playerTokenResponse;
+        private string _playerToken
+        {
+            get {
+                if (_playerTokenResponse == null || _playerTokenResponse?.expirationDate <= DateTime.Now)
+                    _playerTokenResponse = GetPlayerToken();
+                return _playerTokenResponse.vrtPlayerToken;
+            }
+        }
+
+        private VrtPlayerToken GetPlayerToken()
+        {
+            var url = "https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/tokens";
+            var contentJson = new WebClient().UploadString(url, "");
+            return JsonConvert.DeserializeObject<VrtPlayerToken>(contentJson);
+        }
+
         public List<Uri> GetShowSeasons(Uri showUri)
         {
             HtmlWeb web = new HtmlWeb();
@@ -19,7 +36,7 @@ namespace VrtNuDownloader.Service
                 ?.FirstOrDefault()
                 ?.SelectNodes(".//li//a");
 
-            if ((seasonSelectOIptions?.Count ?? 0)  <= 1)
+            if ((seasonSelectOIptions?.Count ?? 0) <= 1)
             {
                 return new List<Uri> { showUri };
                 //return new List<Uri> {
@@ -35,8 +52,7 @@ namespace VrtNuDownloader.Service
 
         public List<Uri> GetShowSeasonEpisodes(Uri seasonUri)
         {
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument html = web.Load(seasonUri);
+            HtmlDocument html = new HtmlWeb().Load(seasonUri);
             return html.DocumentNode.SelectSingleNode("//ul[@aria-labelledby='episodelist-title']")
                 ?.SelectNodes(".//li//a")
                 ?.Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
@@ -57,6 +73,24 @@ namespace VrtNuDownloader.Service
             var pbsPubURL = $"https://mediazone.vrt.be/api/v1/vrtvideo/assets/{publicationId}${videoId}";
             var pbsPubJson = new WebClient().DownloadString(pbsPubURL);
             return JsonConvert.DeserializeObject<VrtPbsPub>(pbsPubJson);
+        }
+
+        public VrtContent GetEpisodeInfoV2(Uri episodeUri)
+        {
+            HtmlDocument html = new HtmlWeb().Load(episodeUri);
+            var div = html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']");
+            return new VrtContent
+            {
+                publicationId = div.GetAttributeValue("data-publicationid", ""),
+                videoId = div.GetAttributeValue("data-videoid", "")
+            };
+        }
+
+        public VrtPbsPubv2 GetPublishInfoV2(string publicationId, string videoId)
+        {
+            var pbsPubURL = $"https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/videos/{publicationId}${videoId}?vrtPlayerToken={_playerToken}&client=vrtvideo";
+            var pbsPubJson = new WebClient().DownloadString(pbsPubURL);
+            return JsonConvert.DeserializeObject<VrtPbsPubv2>(pbsPubJson);
         }
     }
 }

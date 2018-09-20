@@ -14,6 +14,10 @@ namespace VrtNuDownloader.Service
             public bool SaveShowsInFolders { get; set; }
             public bool SaveSeasonsInFolders { get; set; }
             public IEnumerable<string> WatchUrls { get; set; }
+
+            public string Email => throw new System.NotImplementedException();
+
+            public string Password => throw new System.NotImplementedException();
         }
 
 
@@ -61,6 +65,10 @@ namespace VrtNuDownloader.Service
             _fileService.WriteFile(CONFIG_FILE, fileYaml);
         }
 
+
+        public string Email => _config.Email;
+
+        public string Password => _config.Password;
 
         public string DownloadPath => _config.DownloadPath;
 

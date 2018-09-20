@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -94,8 +94,8 @@ namespace VrtNuDownloader
 
         private int DownloadEpisode(Uri episodeUri)
         {
-            var episodeInfo = _vrtNuService.GetEpisodeInfo(episodeUri);
-            var episodeDownloadUri = _vrtNuService.GetPublishInfo(episodeInfo.publicationId, episodeInfo.videoId)
+            var episodeInfo = _vrtNuService.GetEpisodeInfoV2(episodeUri);
+            var episodeDownloadUri = _vrtNuService.GetPublishInfoV2(episodeInfo.publicationId, episodeInfo.videoId)
                 .targetUrls.Where(x => x.type == "HLS")
                 .Select(x => new Uri(x.url)).FirstOrDefault();
             if (episodeDownloadUri == null) return 1;
