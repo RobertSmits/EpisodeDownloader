@@ -11,20 +11,32 @@ namespace VrtNuDownloader.Service
 {
     public class VrtNuService : IVrtNuService
     {
+        private readonly ILogService _logService;
+        private readonly IConfigService _configService;
         private VrtPlayerToken _playerTokenResponse;
+
         private string _playerToken
         {
-            get {
-                if (_playerTokenResponse == null || _playerTokenResponse?.expirationDate <= DateTime.Now)
+            get
+            {
+                if (_playerTokenResponse == null || _playerTokenResponse?.expirationDate <= DateTime.Now.ToUniversalTime())
                     _playerTokenResponse = GetPlayerToken();
                 return _playerTokenResponse.vrtPlayerToken;
             }
         }
 
+        public VrtNuService(ILogService logService, IConfigService configService)
+        {
+            _logService = logService;
+            _configService = configService;
+        }
+
         private VrtPlayerToken GetPlayerToken()
         {
             var url = "https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/tokens";
-            var contentJson = new WebClient().UploadString(url, "");
+            var webClient = new WebClient();
+            webClient.Headers.Add("cookie", $"X-VRT-Token={_configService.Cookie};");
+            var contentJson = webClient.UploadString(url, "");
             return JsonConvert.DeserializeObject<VrtPlayerToken>(contentJson);
         }
 
@@ -77,13 +89,23 @@ namespace VrtNuDownloader.Service
 
         public VrtContent GetEpisodeInfoV2(Uri episodeUri)
         {
-            HtmlDocument html = new HtmlWeb().Load(episodeUri);
-            var div = html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']");
-            return new VrtContent
+            var epInfo = new VrtContent();
+            try
             {
-                publicationId = div.GetAttributeValue("data-publicationid", ""),
-                videoId = div.GetAttributeValue("data-videoid", "")
-            };
+                epInfo = GetEpisodeInfo(episodeUri);
+            }
+            catch
+            {
+                _logService.WriteLog(MessageType.Error, "Old episode info failed");
+            }
+            finally
+            {
+                HtmlDocument html = new HtmlWeb().Load(episodeUri);
+                var div = html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']");
+                epInfo.publicationId = div.GetAttributeValue("data-publicationid", "");
+                epInfo.videoId = div.GetAttributeValue("data-videoid", "");
+            }
+            return epInfo;
         }
 
         public VrtPbsPubv2 GetPublishInfoV2(string publicationId, string videoId)

@@ -6,6 +6,7 @@ namespace VrtNuDownloader.Service.Interface
     {
         string Email { get; }
         string Password { get; }
+        string Cookie { get; }
 
         string DownloadPath { get; }
         string SavePath { get; }

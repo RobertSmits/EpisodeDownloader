@@ -9,15 +9,17 @@ namespace VrtNuDownloader.Service
     {
         public class Config : IConfigService
         {
+            public string Email { get; set; }
+            public string Password { get; set; }
+            public string Cookie { get; set; }
+
+
             public string DownloadPath { get; set; }
             public string SavePath { get; set; }
             public bool SaveShowsInFolders { get; set; }
             public bool SaveSeasonsInFolders { get; set; }
             public IEnumerable<string> WatchUrls { get; set; }
 
-            public string Email => throw new System.NotImplementedException();
-
-            public string Password => throw new System.NotImplementedException();
         }
 
 
@@ -69,6 +71,7 @@ namespace VrtNuDownloader.Service
         public string Email => _config.Email;
 
         public string Password => _config.Password;
+        public string Cookie => _config.Cookie;
 
         public string DownloadPath => _config.DownloadPath;
 

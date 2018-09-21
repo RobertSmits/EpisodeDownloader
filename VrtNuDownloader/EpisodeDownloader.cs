@@ -95,13 +95,14 @@ namespace VrtNuDownloader
         private int DownloadEpisode(Uri episodeUri)
         {
             var episodeInfo = _vrtNuService.GetEpisodeInfoV2(episodeUri);
-            var episodeDownloadUri = _vrtNuService.GetPublishInfoV2(episodeInfo.publicationId, episodeInfo.videoId)
-                .targetUrls.Where(x => x.type == "HLS")
-                .Select(x => new Uri(x.url)).FirstOrDefault();
+            var pubInfo = _vrtNuService.GetPublishInfoV2(episodeInfo.publicationId, episodeInfo.videoId);
+            var episodeDownloadUri = pubInfo.targetUrls.Where(x => x.type.ToLower() == "hls")
+                                        .Select(x => new Uri(x.url)).FirstOrDefault();
             if (episodeDownloadUri == null) return 1;
 #if CHECK_EP_NAME
             if (_historyService.CheckIfDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri)) return -1;
 #endif
+
 
             var filename = _fileService.MakeValidFileName(GetFileName(episodeInfo));
             _fileService.EnsureFolderExists(_configService.DownloadPath);
