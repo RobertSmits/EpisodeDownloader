@@ -13,15 +13,30 @@ namespace VrtNuDownloader.Service
     {
         private readonly ILogService _logService;
         private readonly IConfigService _configService;
-        private VrtPlayerToken _playerTokenResponse;
+        private VrtPlayerTokenSet _vrtPlayerTokenSet;
+        private VrtTokenSet _vrtTokenSet;
+
 
         private string _playerToken
         {
             get
             {
-                if (_playerTokenResponse == null || _playerTokenResponse?.expirationDate <= DateTime.Now.ToUniversalTime())
-                    _playerTokenResponse = GetPlayerToken();
-                return _playerTokenResponse.vrtPlayerToken;
+                if (_vrtPlayerTokenSet == null || _vrtPlayerTokenSet?.expirationDate <= DateTime.Now.ToUniversalTime())
+                    _vrtPlayerTokenSet = GetPlayerToken();
+                return _vrtPlayerTokenSet.vrtPlayerToken;
+            }
+        }
+
+        private string _vrtToken
+        {
+            get
+            {
+                if (_vrtTokenSet == null || FromUnixTime(_vrtTokenSet.expiry)<= DateTime.Now)
+                {
+                    _vrtTokenSet = GetTokenSet();
+                    _configService.Cookie = _vrtTokenSet.refreshtoken;
+                }
+                return _vrtTokenSet.vrtnutoken;
             }
         }
 
@@ -31,13 +46,22 @@ namespace VrtNuDownloader.Service
             _configService = configService;
         }
 
-        private VrtPlayerToken GetPlayerToken()
+        private VrtPlayerTokenSet GetPlayerToken()
         {
             var url = "https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/tokens";
             var webClient = new WebClient();
-            webClient.Headers.Add("cookie", $"X-VRT-Token={_configService.Cookie};");
+            webClient.Headers.Add("cookie", $"X-VRT-Token={_vrtToken};");
             var contentJson = webClient.UploadString(url, "");
-            return JsonConvert.DeserializeObject<VrtPlayerToken>(contentJson);
+            return JsonConvert.DeserializeObject<VrtPlayerTokenSet>(contentJson);
+        }
+
+        private VrtTokenSet GetTokenSet()
+        {
+            var url = "https://token.vrt.be/refreshtoken";
+            var webClient = new WebClient();
+            webClient.Headers.Add("cookie", $"vrtlogin-rt={_configService.Cookie};");
+            var contentJson = webClient.DownloadString(url);
+            return JsonConvert.DeserializeObject<VrtTokenSet>(contentJson);
         }
 
         public List<Uri> GetShowSeasons(Uri showUri)
@@ -114,5 +138,12 @@ namespace VrtNuDownloader.Service
             var pbsPubJson = new WebClient().DownloadString(pbsPubURL);
             return JsonConvert.DeserializeObject<VrtPbsPubv2>(pbsPubJson);
         }
+
+        public static DateTime FromUnixTime(long unixTime)
+        {
+            return epoch.AddSeconds(unixTime);
+        }
+
+        private static readonly DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     }
 }

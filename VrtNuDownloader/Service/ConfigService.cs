@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 using VrtNuDownloader.Service.Interface;
 
 namespace VrtNuDownloader.Service
@@ -13,13 +12,11 @@ namespace VrtNuDownloader.Service
             public string Password { get; set; }
             public string Cookie { get; set; }
 
-
             public string DownloadPath { get; set; }
             public string SavePath { get; set; }
             public bool SaveShowsInFolders { get; set; }
             public bool SaveSeasonsInFolders { get; set; }
             public IEnumerable<string> WatchUrls { get; set; }
-
         }
 
 
@@ -71,7 +68,11 @@ namespace VrtNuDownloader.Service
         public string Email => _config.Email;
 
         public string Password => _config.Password;
-        public string Cookie => _config.Cookie;
+        public string Cookie
+        {
+            get => _config.Cookie;
+            set { _config.Cookie = value; WriteConfig(); }
+        }
 
         public string DownloadPath => _config.DownloadPath;
 

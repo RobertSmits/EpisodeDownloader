@@ -2,7 +2,7 @@
 
 namespace VrtNuDownloader.Models
 {
-    public class VrtPlayerToken
+    public class VrtPlayerTokenSet
     {
         public string vrtPlayerToken { get; set; }
         public DateTime expirationDate { get; set; }
