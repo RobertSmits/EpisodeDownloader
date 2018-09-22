@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VrtNuDownloader.Models
+namespace VrtNuDownloader.Models.Vrt
 {
     public class VrtPlayerTokenSet
     {

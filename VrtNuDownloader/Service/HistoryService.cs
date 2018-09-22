@@ -7,7 +7,7 @@ namespace VrtNuDownloader.Service
     public class HistoryService : IHistoryService
     {
         private readonly IDatabaseService _databaseService;
-        
+
         public HistoryService(IDatabaseService databaseService)
         {
             _databaseService = databaseService;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using VrtNuDownloader.Models;
+using VrtNuDownloader.Models.Vrt.Api;
 using VrtNuDownloader.Service.Interface;
 
 namespace VrtNuDownloader
@@ -60,7 +60,7 @@ namespace VrtNuDownloader
                         // if (status == -1) _logService.WriteLog("Already downloaded, skipped");
                         if (status == 1) _logService.WriteLog(MessageType.Error, "Couldn't find a valid M3U8");
                         if (status == 2) _logService.WriteLog(MessageType.Error, "Error running ffmpeg");
-                        if (status == 0) _logService.WriteLog(MessageType.Info, "Downnload Finished");                            
+                        if (status == 0) _logService.WriteLog(MessageType.Info, "Downnload Finished");
                     }
                 }
             }
@@ -86,7 +86,7 @@ namespace VrtNuDownloader
             if (!_configService.SaveShowsInFolders) return _configService.SavePath;
             var path = Path.Combine(_configService.SavePath, _fileService.MakeValidFileName(episodeInfo.programTitle));
             if (!_configService.SaveSeasonsInFolders) return path;
-            var season = int.TryParse(episodeInfo.seasonTitle, out int seasonNr)  ? $"S{seasonNr:00}" : episodeInfo.seasonTitle;
+            var season = int.TryParse(episodeInfo.seasonTitle, out int seasonNr) ? $"S{seasonNr:00}" : episodeInfo.seasonTitle;
             path = Path.Combine(path, _fileService.MakeValidFileName(season));
             return path;
         }

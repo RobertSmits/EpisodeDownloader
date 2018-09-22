@@ -1,4 +1,4 @@
-﻿namespace VrtNuDownloader.Models
+﻿namespace VrtNuDownloader.Models.Vrt.Api
 {
     public class Chaptering
     {

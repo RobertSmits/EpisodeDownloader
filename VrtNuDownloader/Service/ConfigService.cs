@@ -21,7 +21,7 @@ namespace VrtNuDownloader.Service
 
 
         const string DOWNLOAD_DIR = "Downloads";
-        const string CONFIG_FILE = "config.yaml";
+        const string CONFIG_FILE = "config.yml";
         private readonly IFileService _fileService;
         private Config _config;
 
@@ -31,7 +31,7 @@ namespace VrtNuDownloader.Service
             if (!File.Exists(CONFIG_FILE))
                 CreateDefaultConfig();
             else
-                LoadConfig();
+                _config = _fileService.ReadYamlFile<Config>(CONFIG_FILE);
 
             _fileService.EnsureFolderExists(_config.DownloadPath);
             _fileService.EnsureFolderExists(_config.SavePath);
@@ -41,47 +41,35 @@ namespace VrtNuDownloader.Service
         {
             _config = new Config
             {
+                Email = null,
+                Password = null,
+                Cookie = null,
                 DownloadPath = DOWNLOAD_DIR,
                 SavePath = DOWNLOAD_DIR,
                 SaveShowsInFolders = true,
                 SaveSeasonsInFolders = true,
                 WatchUrls = new string[0]
             };
-            WriteConfig();
-        }
-
-        private void LoadConfig()
-        {
-            var c = new YamlDotNet.Serialization.Deserializer();
-            var fileYaml = _fileService.ReadFile(CONFIG_FILE);
-            _config = c.Deserialize<Config>(fileYaml);
-        }
-
-        private void WriteConfig()
-        {
-            var c = new YamlDotNet.Serialization.Serializer();
-            var fileYaml = c.Serialize(_config);
-            _fileService.WriteFile(CONFIG_FILE, fileYaml);
+            _fileService.WriteYamlFile(_config, CONFIG_FILE);
         }
 
 
         public string Email => _config.Email;
-
         public string Password => _config.Password;
         public string Cookie
         {
             get => _config.Cookie;
-            set { _config.Cookie = value; WriteConfig(); }
+            set
+            {
+                _config.Cookie = value;
+                _fileService.WriteYamlFile(_config, CONFIG_FILE);
+            }
         }
 
         public string DownloadPath => _config.DownloadPath;
-
         public string SavePath => _config.SavePath;
-
         public bool SaveShowsInFolders => _config.SaveShowsInFolders;
-
         public bool SaveSeasonsInFolders => _config.SaveSeasonsInFolders;
-
         public IEnumerable<string> WatchUrls => _config.WatchUrls;
     }
 }

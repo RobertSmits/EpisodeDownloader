@@ -8,14 +8,18 @@ namespace VrtNuDownloader
     public class UnityConfig
     {
         public static void RegisterTypes(IUnityContainer container)
-        {            container.RegisterType<ILogService, LogService>();
-            container.RegisterType<IFileService, FileService>();
-            container.RegisterType<IVrtNuService, VrtNuService>();
-            container.RegisterType<IFfmpegService, FfmpegService>();
-            container.RegisterType<IConfigService, ConfigService>();
-            container.RegisterType<IHistoryService, HistoryService>();
-            container.RegisterType<IDatabaseService, DatabaseService>();
-        }
+        {
+
+            container.RegisterSingleton<ILogService, LogService>();
+            container.RegisterSingleton<IFileService, FileService>();
+            container.RegisterSingleton<IVrtNuService, VrtNuService>();
+            container.RegisterSingleton<IFfmpegService, FfmpegService>();
+            container.RegisterSingleton<IConfigService, ConfigService>();
+            container.RegisterSingleton<IHistoryService, HistoryService>();
+            container.RegisterSingleton<IVrtTokenService, VrtTokenService>();
+            container.RegisterSingleton<IDatabaseService, DatabaseService>();
+        }
+
         private static Lazy<IUnityContainer> container =
           new Lazy<IUnityContainer>(() =>
           {

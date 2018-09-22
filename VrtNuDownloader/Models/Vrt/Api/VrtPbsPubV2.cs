@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace VrtNuDownloader.Models
+﻿namespace VrtNuDownloader.Models.Vrt.Api
 {
     public class VrtPbsPubv2
     {

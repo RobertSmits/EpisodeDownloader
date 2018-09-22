@@ -4,7 +4,7 @@ using VrtNuDownloader.Models.Sqlite;
 
 namespace VrtNuDownloader.Service.Interface
 {
-    public class DatabaseService : IDatabaseService 
+    public class DatabaseService : IDatabaseService
     {
         private readonly VrtNuDownloaderContext database;
 
