@@ -1,11 +1,17 @@
 ﻿using System.IO;
 using System.Text.RegularExpressions;
 using VrtNuDownloader.Service.Interface;
+using YamlDotNet.Serialization;
 
 namespace VrtNuDownloader.Service
 {
     public class FileService : IFileService
     {
+        public bool CheckFileExists(string fileName)
+        {
+            return File.Exists(fileName);
+        }
+
         public void EnsureFolderExists(string folderName)
         {
             if (!Directory.Exists(folderName)) Directory.CreateDirectory(folderName);
@@ -45,6 +51,20 @@ namespace VrtNuDownloader.Service
         public void MoveFile(string sourceFileName, string destFileName)
         {
             File.Move(sourceFileName, destFileName);
+        }
+
+
+        public T ReadYamlFile<T>(string fileName)
+        {
+            var fileYaml = ReadFile(fileName);
+            return new Deserializer().Deserialize<T>(fileYaml);
+        }
+
+        public void WriteYamlFile<T>(T data, string fileName)
+        {
+            var serialiser = new SerializerBuilder().EmitDefaults().Build();
+            var fileYaml = serialiser.Serialize(data);
+            WriteFile(fileName, fileYaml);
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using Unity;
 using VrtNuDownloader.Service.Interface;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace VrtNuDownloader
 {
@@ -9,9 +9,9 @@ namespace VrtNuDownloader
     {
         static void Main(string[] args)
         {
-            var unityContainer = UnityConfig.Container;
-            var downloader = unityContainer.Resolve<EpisodeDownloader>();
-            var config = unityContainer.Resolve<IConfigService>();
+            var container = DependencyInjectionConfig.Container;
+            var downloader = container.GetService<EpisodeDownloader>();
+            var config = container.GetRequiredService<IConfigService>();
             var showUrls = config.WatchUrls.Select(x => new Uri(x));
             downloader.Run(showUrls);
         }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace VrtNuDownloader.Models
+﻿namespace VrtNuDownloader.Models.Vrt.Api
 {
     public class VrtContent
     {
@@ -35,9 +33,9 @@ namespace VrtNuDownloader.Models
         public string programDescription { get; set; }
         public int lastReplicationDate { get; set; }
         public string url { get; set; }
-        public List<string> tags { get; set; }
-        public List<string> programTags { get; set; }
-        public List<object> chapters { get; set; }
+        public string[] tags { get; set; }
+        public string[] programTags { get; set; }
+        public object[] chapters { get; set; }
         public string publicationId { get; set; }
         public string allowedRegion { get; set; }
     }
