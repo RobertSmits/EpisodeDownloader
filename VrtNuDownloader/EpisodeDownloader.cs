@@ -58,9 +58,9 @@ namespace VrtNuDownloader
                     {
                         var status = _historyService.CheckIfDownloaded(episode) ? -1 : DownloadEpisode(episode);
                         // if (status == -1) _logService.WriteLog("Already downloaded, skipped");
+                        if (status == 0) _logService.WriteLog(MessageType.Info, "Downnload Finished");
                         if (status == 1) _logService.WriteLog(MessageType.Error, "Couldn't find a valid M3U8");
                         if (status == 2) _logService.WriteLog(MessageType.Error, "Error running ffmpeg");
-                        if (status == 0) _logService.WriteLog(MessageType.Info, "Downnload Finished");
                     }
                 }
             }
@@ -95,14 +95,21 @@ namespace VrtNuDownloader
         private int DownloadEpisode(Uri episodeUri)
         {
             var episodeInfo = _vrtNuService.GetEpisodeInfoV2(episodeUri);
-            var pubInfo = _vrtNuService.GetPublishInfoV2(episodeInfo.publicationId, episodeInfo.videoId);
+            var pubInfo = default(VrtPbsPubv2);
+            try {
+                pubInfo = _vrtNuService.GetPublishInfoV2(episodeInfo.publicationId, episodeInfo.videoId);
+            }
+            catch (Exception e) {
+                _logService.WriteLog(MessageType.Error, $"Error while downloading {episodeInfo.name}. StackTrace: {e.ToString()} {e.StackTrace}");
+                return 3;
+            }
             var episodeDownloadUri = pubInfo.targetUrls.Where(x => x.type.ToLower() == "hls")
                                         .Select(x => new Uri(x.url)).FirstOrDefault();
             if (episodeDownloadUri == null) return 1;
+
 #if CHECK_EP_NAME
             if (_historyService.CheckIfDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri)) return -1;
 #endif
-
 
             var filename = _fileService.MakeValidFileName(GetFileName(episodeInfo));
             _fileService.EnsureFolderExists(_configService.DownloadPath);
