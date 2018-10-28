@@ -1,7 +1,14 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
-using VrtNuDownloader.Service;
-using VrtNuDownloader.Service.Interface;
+using VrtNuDownloader.Core.Interfaces;
+using VrtNuDownloader.Core.Service.Config;
+using VrtNuDownloader.Core.Service.DataBase;
+using VrtNuDownloader.Core.Service.Ffmpeg;
+using VrtNuDownloader.Core.Service.File;
+using VrtNuDownloader.Core.Service.History;
+using VrtNuDownloader.Core.Service.Logging;
+using VrtNuDownloader.Downloader.Vrt;
+using VrtNuDownloader.Downloader.Vrt.Service;
 
 namespace VrtNuDownloader
 {
@@ -9,7 +16,7 @@ namespace VrtNuDownloader
     {
         public static void RegisterTypes(IServiceCollection serviceCollection)
         {
-            serviceCollection.AddSingleton<ILogService, LogService>();
+            serviceCollection.AddSingleton<ILoggingService, LoggingService>();
             serviceCollection.AddSingleton<IFileService, FileService>();
             serviceCollection.AddSingleton<IVrtNuService, VrtNuService>();
             serviceCollection.AddSingleton<IFfmpegService, FfmpegService>();
@@ -17,6 +24,7 @@ namespace VrtNuDownloader
             serviceCollection.AddSingleton<IHistoryService, HistoryService>();
             serviceCollection.AddSingleton<IVrtTokenService, VrtTokenService>();
             serviceCollection.AddSingleton<IDatabaseService, DatabaseService>();
+            serviceCollection.AddSingleton<IDownloader, VrtDownloader>();
             serviceCollection.AddTransient<EpisodeDownloader>();
         }
 

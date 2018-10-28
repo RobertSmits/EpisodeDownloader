@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using VrtNuDownloader.Service.Interface;
 using Microsoft.Extensions.DependencyInjection;
+using VrtNuDownloader.Core.Service.Config;
 
 namespace VrtNuDownloader
 {
