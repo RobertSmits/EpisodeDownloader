@@ -4,13 +4,13 @@ using System.Net;
 using VrtNuDownloader.Core.Models;
 using VrtNuDownloader.Core.Service.Config;
 using VrtNuDownloader.Core.Service.File;
-using VrtNuDownloader.Downloader.Vrt.Models;
+using VrtNuDownloader.Downloader.Vrt.Models.Auth;
 
 namespace VrtNuDownloader.Downloader.Vrt.Service
 {
     public class VrtTokenService : IVrtTokenService
     {
-        const string TOKEN_FILE = ".cookies.yml";
+        const string TOKEN_FILE = ".vrt-cookies.yml";
 
         private VrtTokenSet _vrtTokenSet;
         private VrtPlayerTokenSet _vrtPlayerTokenSet;
@@ -41,8 +41,8 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
             {
                 if (_vrtTokenSet == null || new UnixTimeStamp(_vrtTokenSet.expiry) <= UnixTimeStamp.Now)
                 {
-                    _vrtTokenSet = RefreshTokenSet(_configService.Cookie ?? _vrtTokenSet?.refreshtoken);
-                    _configService.Cookie = null;
+                    _vrtTokenSet = RefreshTokenSet(_configService.VrtCookie ?? _vrtTokenSet?.refreshtoken);
+                    _configService.VrtCookie = null;
                     _fileService.WriteYamlFile(new VrtTokenContainer { VrtTokenSet = _vrtTokenSet, VrtPlayerTokenSet = _vrtPlayerTokenSet }, TOKEN_FILE);
                 }
                 return _vrtTokenSet.vrtnutoken;

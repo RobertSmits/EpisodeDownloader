@@ -4,10 +4,14 @@ namespace VrtNuDownloader.Core.Service.Config
 {
     public interface IConfigService
     {
-        string Email { get; }
-        string Password { get; }
-        string Cookie { get; set; }
+        // Vrt
+        string VrtCookie { get; set; }
 
+        // Vier
+        string VierLastAuthUser { get; }
+        string VierRefreshToken { get; }
+
+        // Application
         string DownloadPath { get; }
         string SavePath { get; }
         bool SaveShowsInFolders { get; }

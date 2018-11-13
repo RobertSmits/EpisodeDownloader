@@ -35,7 +35,7 @@ namespace VrtNuDownloader.Core.Models
             return ffmpegService.DownloadAndMoveEpisode(StreamUrl, filename, configService.DownloadPath, savePath);
         }
 
-        private string GetFileName()
+        public string GetFileName()
         {
             var filename = ShowName;
             if (int.TryParse(Season, out int seasonNr))

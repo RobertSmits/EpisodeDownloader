@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using VrtNuDownloader.Core.Service.File;
 
 namespace VrtNuDownloader.Core.Service.Config
@@ -8,9 +7,10 @@ namespace VrtNuDownloader.Core.Service.Config
     {
         public class Config : IConfigService
         {
-            public string Email { get; set; }
-            public string Password { get; set; }
-            public string Cookie { get; set; }
+            public string VrtCookie { get; set; }
+            
+            public string VierLastAuthUser { get; set; }
+            public string VierRefreshToken { get; set; }
 
             public string DownloadPath { get; set; }
             public string SavePath { get; set; }
@@ -41,9 +41,6 @@ namespace VrtNuDownloader.Core.Service.Config
         {
             _config = new Config
             {
-                Email = null,
-                Password = null,
-                Cookie = null,
                 DownloadPath = DOWNLOAD_DIR,
                 SavePath = DOWNLOAD_DIR,
                 SaveShowsInFolders = true,
@@ -53,19 +50,19 @@ namespace VrtNuDownloader.Core.Service.Config
             _fileService.WriteYamlFile(_config, CONFIG_FILE);
         }
 
-
-        public string Email => _config.Email;
-        public string Password => _config.Password;
-        public string Cookie
+        public string VrtCookie
         {
-            get => _config.Cookie;
+            get => _config.VrtCookie;
             set
             {
-                _config.Cookie = value;
+                _config.VrtCookie = value;
                 _fileService.WriteYamlFile(_config, CONFIG_FILE);
             }
         }
-
+        
+        public string VierLastAuthUser =>_config.VierLastAuthUser;
+        public string VierRefreshToken => _config.VierRefreshToken;
+        
         public string DownloadPath => _config.DownloadPath;
         public string SavePath => _config.SavePath;
         public bool SaveShowsInFolders => _config.SaveShowsInFolders;
