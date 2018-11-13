@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using VrtNuDownloader.Core.Interfaces;
+using VrtNuDownloader.Core.Models;
 using VrtNuDownloader.Core.Service.Config;
 using VrtNuDownloader.Core.Service.Ffmpeg;
 using VrtNuDownloader.Core.Service.File;
@@ -50,7 +51,7 @@ namespace VrtNuDownloader.Downloader.Vrt
             var seasons = _vrtNuService.GetShowSeasons(episodeUrl);
             if (seasons == null)
             {
-                _logService.WriteLog(MessageType.Warn, "No Seasons Available");
+                _logService.WriteLog(MessageType.Info, "No Seasons Available");
                 return;
             }
 
@@ -59,43 +60,19 @@ namespace VrtNuDownloader.Downloader.Vrt
                 var episodes = _vrtNuService.GetShowSeasonEpisodes(season);
                 if (episodes == null)
                 {
-                    _logService.WriteLog(MessageType.Warn, "No Episodes Available");
+                    _logService.WriteLog(MessageType.Info, "No Episodes Available");
                     continue;
                 }
                 foreach (var episode in episodes)
                 {
+                    _logService.WriteLog(MessageType.Info, "Current url: " + episode.ToString());
                     var status = _historyService.CheckIfDownloaded(episode) ? -1 : DownloadEpisode(episode);
-                    // if (status == -1) _logService.WriteLog("Already downloaded, skipped");
+                    if (status == -1) _logService.WriteLog(MessageType.Info, "Already downloaded, skipped");
                     if (status == 0) _logService.WriteLog(MessageType.Info, "Downnload Finished");
                     if (status == 1) _logService.WriteLog(MessageType.Error, "Couldn't find a valid M3U8");
                     if (status == 2) _logService.WriteLog(MessageType.Error, "Error running ffmpeg");
                 }
             }
-        }
-
-        private string GetFileName(VrtContent episodeInfo)
-        {
-            var filename = episodeInfo.programTitle;
-            if (int.TryParse(episodeInfo.seasonTitle, out int seasonNr))
-            {
-                var episodeNumber = episodeInfo.episodeNumber < 100 ? episodeInfo.episodeNumber.ToString("00") : episodeInfo.episodeNumber.ToString("000");
-                filename += ($" - S{seasonNr:00}E{episodeNumber} - {episodeInfo.title}.mp4");
-            }
-            else
-            {
-                filename += ($" - S{episodeInfo.seasonTitle:00}E{episodeInfo.episodeNumber} - {episodeInfo.title}.mp4");
-            }
-            return filename;
-        }
-
-        private string GetSavePath(VrtContent episodeInfo)
-        {
-            if (!_configService.SaveShowsInFolders) return _configService.SavePath;
-            var path = Path.Combine(_configService.SavePath, _fileService.MakeValidFileName(episodeInfo.programTitle));
-            if (!_configService.SaveSeasonsInFolders) return path;
-            var season = int.TryParse(episodeInfo.seasonTitle, out int seasonNr) ? $"S{seasonNr:00}" : episodeInfo.seasonTitle;
-            path = Path.Combine(path, _fileService.MakeValidFileName(season));
-            return path;
         }
 
         private int DownloadEpisode(Uri episodeUri)
@@ -119,18 +96,18 @@ namespace VrtNuDownloader.Downloader.Vrt
             if (_historyService.CheckIfDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri)) return -1;
 #endif
 
-            var filename = _fileService.MakeValidFileName(GetFileName(episodeInfo));
-            _fileService.EnsureFolderExists(_configService.DownloadPath);
-            var downloadFile = Path.Combine(_configService.DownloadPath, filename);
+            var epInfo = new EpisodeInfo
+            {
+                ShowName = episodeInfo.programTitle,
+                Season = episodeInfo.seasonTitle,
+                Episode = episodeInfo.episodeNumber,
+                Title = episodeInfo.title,
+                StreamUrl = episodeDownloadUri
+            };
 
             _logService.WriteLog(MessageType.Info, $"Downloading {episodeInfo.name}");
-            var processOutput = _ffmpegService.DownloadEpisode(episodeDownloadUri, downloadFile);
+            var processOutput = epInfo.DownloadToFolder(_fileService, _configService, _ffmpegService);
             if (!processOutput) return 2;
-
-            var savePath = GetSavePath(episodeInfo);
-            _fileService.EnsureFolderExists(savePath);
-            savePath = Path.Combine(savePath, filename);
-            _fileService.MoveFile(downloadFile, savePath);
 
             _historyService.AddDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri);
             return 0;
