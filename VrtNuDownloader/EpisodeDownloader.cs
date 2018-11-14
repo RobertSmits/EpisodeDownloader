@@ -8,14 +8,14 @@ namespace VrtNuDownloader
 {
     public class EpisodeDownloader
     {
-        public void Run(IEnumerable<Uri> ShowUris)
+        public void Run(IEnumerable<Uri> ShowUrls)
         {
-            foreach (var showUri in ShowUris)
+            foreach (var showUrl in ShowUrls)
             {
                 DependencyInjectionConfig.Container
                     .GetServices<IDownloader>()
-                    .First(x => x.CanHandleUrl(showUri))
-                    .Handle(showUri);
+                    .First(x => x.CanHandleUrl(showUrl))
+                    .Handle(showUrl);
             }
         }
     }

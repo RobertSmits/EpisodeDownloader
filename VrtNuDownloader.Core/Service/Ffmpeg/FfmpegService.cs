@@ -12,11 +12,11 @@ namespace VrtNuDownloader.Core.Service.Ffmpeg
         {
             _fileService = fileService;
         }
-
-        public bool DownloadAndMoveEpisode(Uri videoUri, string fileName, string downloadPath, string savePath)
+        
+        public bool DownloadAndMoveEpisode(Uri streamUrl, string fileName, string downloadPath, string savePath)
         {
             var downloadFilePath = Path.Combine(downloadPath, fileName);
-            var result = DownloadEpisode( videoUri, downloadFilePath);
+            var result = DownloadEpisode(streamUrl, downloadFilePath);
             if (result == false) return false;
 
 
@@ -25,11 +25,11 @@ namespace VrtNuDownloader.Core.Service.Ffmpeg
             return true;
         }
 
-        public bool DownloadEpisode(Uri videoUri, string filePath)
+        public bool DownloadEpisode(Uri streamUrl, string filePath)
         {
             Process p = new Process();
             p.StartInfo.FileName = "ffmpeg";
-            p.StartInfo.Arguments = $"-i \"{videoUri.AbsoluteUri}\" -c copy \"{filePath}\"";
+            p.StartInfo.Arguments = $"-i \"{streamUrl.AbsoluteUri}\" -c copy \"{filePath}\"";
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardError = true;
             if (!p.Start()) return false;

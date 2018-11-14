@@ -23,16 +23,16 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
             _vrtTokenService = vrtTokenService;
         }
 
-        public Uri[] GetShowSeasons(Uri showUri)
+        public Uri[] GetShowSeasons(Uri showUrl)
         {
             HtmlWeb web = new HtmlWeb();
-            HtmlDocument html = web.Load(showUri);
+            HtmlDocument html = web.Load(showUrl);
             var seasonSelectOIptions = html.DocumentNode.SelectNodes("//*[@class=\"vrt-labelnav\"]")
                 ?.FirstOrDefault()
                 ?.SelectNodes(".//li//a");
 
             if ((seasonSelectOIptions?.Count ?? 0) <= 1)
-                return new Uri[] { showUri };
+                return new Uri[] { showUrl };
 
             return seasonSelectOIptions
                 .Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
@@ -40,9 +40,9 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
                 .ToArray();
         }
 
-        public Uri[] GetShowSeasonEpisodes(Uri seasonUri)
+        public Uri[] GetShowSeasonEpisodes(Uri seasonUrl)
         {
-            HtmlDocument html = new HtmlWeb().Load(seasonUri);
+            HtmlDocument html = new HtmlWeb().Load(seasonUrl);
             return html.DocumentNode.SelectSingleNode("//ul[@aria-labelledby='episodelist-title']")
                 ?.SelectNodes(".//li//a")
                 ?.Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
@@ -50,11 +50,11 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
                 .ToArray();
         }
 
-        public VrtContent GetEpisodeInfo(Uri episodeUri)
+        public VrtContent GetEpisodeInfo(Uri episodeUrl)
         {
-            var episodeURL = episodeUri.AbsoluteUri;
-            var contentJsonURL = episodeURL.Remove(episodeURL.Length - 1) + ".content.json";
-            var contentJson = new WebClient().DownloadString(contentJsonURL);
+            var episodeURL = episodeUrl.AbsoluteUri;
+            var contentJsonUrl = episodeURL.Remove(episodeURL.Length - 1) + ".content.json";
+            var contentJson = new WebClient().DownloadString(contentJsonUrl);
             return JsonConvert.DeserializeObject<VrtContent>(contentJson);
         }
 
@@ -65,12 +65,12 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
             return JsonConvert.DeserializeObject<VrtPbsPub>(pbsPubJson);
         }
 
-        public VrtContent GetEpisodeInfoV2(Uri episodeUri)
+        public VrtContent GetEpisodeInfoV2(Uri episodeUrl)
         {
             var epInfo = new VrtContent();
             try
             {
-                epInfo = GetEpisodeInfo(episodeUri);
+                epInfo = GetEpisodeInfo(episodeUrl);
             }
             catch
             {
@@ -78,7 +78,7 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
             }
             finally
             {
-                HtmlDocument html = new HtmlWeb().Load(episodeUri);
+                HtmlDocument html = new HtmlWeb().Load(episodeUrl);
                 var div = html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']");
                 epInfo.publicationId = div.GetAttributeValue("data-publicationid", "");
                 epInfo.videoId = div.GetAttributeValue("data-videoid", "");

@@ -75,9 +75,9 @@ namespace VrtNuDownloader.Downloader.Vrt
             }
         }
 
-        private int DownloadEpisode(Uri episodeUri)
+        private int DownloadEpisode(Uri episodeUrl)
         {
-            var episodeInfo = _vrtNuService.GetEpisodeInfoV2(episodeUri);
+            var episodeInfo = _vrtNuService.GetEpisodeInfoV2(episodeUrl);
             var pubInfo = default(VrtPbsPubv2);
             try
             {
@@ -88,12 +88,12 @@ namespace VrtNuDownloader.Downloader.Vrt
                 _logService.WriteLog(MessageType.Error, $"Error while downloading {episodeInfo.name}. StackTrace: {e.ToString()} {e.StackTrace}");
                 return 3;
             }
-            var episodeDownloadUri = pubInfo.targetUrls.Where(x => x.type.ToLower() == "hls")
+            var episodeDownloadUrl = pubInfo.targetUrls.Where(x => x.type.ToLower() == "hls")
                                         .Select(x => new Uri(x.url)).FirstOrDefault();
-            if (episodeDownloadUri == null) return 1;
+            if (episodeDownloadUrl == null) return 1;
 
 #if CHECK_EP_NAME
-            if (_historyService.CheckIfDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri)) return -1;
+            if (_historyService.CheckIfDownloaded(episodeInfo.name, episodeUrl, episodeDownloadUrl)) return -1;
 #endif
 
             var epInfo = new EpisodeInfo
@@ -102,14 +102,14 @@ namespace VrtNuDownloader.Downloader.Vrt
                 Season = episodeInfo.seasonTitle,
                 Episode = episodeInfo.episodeNumber,
                 Title = episodeInfo.title,
-                StreamUrl = episodeDownloadUri
+                StreamUrl = episodeDownloadUrl
             };
 
             _logService.WriteLog(MessageType.Info, $"Downloading {episodeInfo.name}");
             var processOutput = epInfo.DownloadToFolder(_fileService, _configService, _ffmpegService);
             if (!processOutput) return 2;
 
-            _historyService.AddDownloaded(episodeInfo.name, episodeUri, episodeDownloadUri);
+            _historyService.AddDownloaded(episodeInfo.name, episodeUrl, episodeDownloadUrl);
             return 0;
         }
     }

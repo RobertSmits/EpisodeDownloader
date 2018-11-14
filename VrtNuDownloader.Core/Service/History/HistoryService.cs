@@ -13,25 +13,25 @@ namespace VrtNuDownloader.Core.Service.History
             _databaseService = databaseService;
         }
 
-        public void AddDownloaded(string episodeName, Uri episodeUri, Uri videoUri)
+        public void AddDownloaded(string episodeName, Uri episodeUrl, Uri videoUrl)
         {
-            _databaseService.AddHistory(episodeName, episodeUri.AbsoluteUri, videoUri.AbsoluteUri);
+            _databaseService.AddHistory(episodeName, episodeUrl.AbsoluteUri, videoUrl.AbsoluteUri);
         }
 
-        public bool CheckIfDownloaded(Uri episodeUri)
+        public bool CheckIfDownloaded(Uri episodeUrl)
         {
-            return _databaseService.GetHistory().FirstOrDefault(x => x.EpisodeUrl == episodeUri.AbsoluteUri) != null;
+            return _databaseService.GetHistory().FirstOrDefault(x => x.EpisodeUrl == episodeUrl.AbsoluteUri) != null;
         }
 
 #if CHECK_EP_NAME
-        public bool CheckIfDownloaded(string episodeName, Uri episodeUri, Uri videoUri)
+        public bool CheckIfDownloaded(string episodeName, Uri episodeUrl, Uri videoUrl)
         {
             //return _databaseService.GetHistory().FirstOrDefault(x => x.Name == episodeName) != null;
             var downoadedItem = _databaseService.GetHistory().FirstOrDefault(x => x.Name == episodeName);
             if (downoadedItem == null) return false;
             if (downoadedItem.EpisodeUrl != null) return true;
-            downoadedItem.EpisodeUrl = episodeUri.AbsoluteUri;
-            downoadedItem.VideoUrl = videoUri.AbsoluteUri;
+            downoadedItem.EpisodeUrl = episodeUrl.AbsoluteUri;
+            downoadedItem.VideoUrl = videoUrl.AbsoluteUri;
             _databaseService.SaveChanges();
             return true;
         }
