@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using VrtNuDownloader.Core.Interfaces;
+using VrtNuDownloader.Core.Service.Logging;
 
 namespace VrtNuDownloader
 {
@@ -12,10 +13,17 @@ namespace VrtNuDownloader
         {
             foreach (var showUrl in ShowUrls)
             {
-                DependencyInjectionConfig.Container
+                var handler = DependencyInjectionConfig.Container
                     .GetServices<IDownloader>()
-                    .First(x => x.CanHandleUrl(showUrl))
-                    .Handle(showUrl);
+                    .FirstOrDefault(x => x.CanHandleUrl(showUrl));
+
+                if (handler != null)
+                {
+                    handler.Handle(showUrl);
+                    continue;
+                }
+
+                DependencyInjectionConfig.Container.GetService<ILoggingService>().WriteLog(MessageType.Error, $"No handler found for url: {showUrl}");
             }
         }
     }
