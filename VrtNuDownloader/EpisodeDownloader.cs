@@ -11,19 +11,16 @@ namespace VrtNuDownloader
     {
         public void Run(IEnumerable<Uri> ShowUrls)
         {
+            var defaultDownloader = DependencyInjectionConfig.Container.GetService<DefaultDownloader>();
+
             foreach (var showUrl in ShowUrls)
             {
                 var handler = DependencyInjectionConfig.Container
                     .GetServices<IDownloader>()
-                    .FirstOrDefault(x => x.CanHandleUrl(showUrl));
+                    .FirstOrDefault(x => x.CanHandleUrl(showUrl))
+                    ?? defaultDownloader;
 
-                if (handler != null)
-                {
-                    handler.Handle(showUrl);
-                    continue;
-                }
-
-                DependencyInjectionConfig.Container.GetService<ILoggingService>().WriteLog(MessageType.Error, $"No handler found for url: {showUrl}");
+                handler.Handle(showUrl);
             }
         }
     }

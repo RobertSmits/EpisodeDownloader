@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using VrtNuDownloader.Core.DependencyInjection;
+using VrtNuDownloader.Core.Interfaces;
 using VrtNuDownloader.Core.Service.Config;
 using VrtNuDownloader.Core.Service.DataBase;
 using VrtNuDownloader.Core.Service.Ffmpeg;
@@ -24,6 +25,7 @@ namespace VrtNuDownloader
             serviceCollection.AddSingleton<IHistoryService, HistoryService>();
             serviceCollection.AddSingleton<IDatabaseService, DatabaseService>();
             serviceCollection.AddTransient<IFfmpegService, FfmpegService>();
+            serviceCollection.AddTransient<DefaultDownloader>();
             serviceCollection.AddTransient<EpisodeDownloader>();
         }
 
