@@ -94,7 +94,10 @@ namespace VrtNuDownloader.Downloader.Vrt
             };
 
             _logger.LogInformation($"Downloading {episodeInfo.name}");
-            var processOutput = epInfo.DownloadToFolder();
+
+            var skip = pubInfo.playlist.content.TakeWhile(x => !x.skippable).Sum(x => x.duration) / 1000;
+            var duration = (pubInfo.playlist.content.FirstOrDefault(x => x.skippable)?.duration ?? 0) / 1000;
+            var processOutput = epInfo.DownloadToFolder(skip, duration);
             if (!processOutput) return 2;
 
             _historyService.AddDownloaded(episodeInfo.name, episodeUrl, episodeDownloadUrl);

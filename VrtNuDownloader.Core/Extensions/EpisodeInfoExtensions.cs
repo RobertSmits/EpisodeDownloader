@@ -10,6 +10,11 @@ namespace VrtNuDownloader.Core.Extensions
     {
         public static bool DownloadToFolder(this EpisodeInfo episodeInfo)
         {
+            return episodeInfo.DownloadToFolder(0, 0);
+        }
+
+        public static bool DownloadToFolder(this EpisodeInfo episodeInfo, int skip, int duration)
+        {
             IFileService fileService = Context.Context.Container.GetRequiredService<IFileService>();
             Configuration configuration = Context.Context.Container.GetRequiredService<IOptions<Configuration>>().Value;
             IFfmpegService ffmpegService = Context.Context.Container.GetRequiredService<IFfmpegService>();
@@ -30,7 +35,7 @@ namespace VrtNuDownloader.Core.Extensions
             fileService.EnsureFolderExists(configuration.DownloadPath);
             fileService.EnsureFolderExists(savePath);
 
-            return ffmpegService.DownloadAndMoveEpisode(episodeInfo.StreamUrl, filename, configuration.DownloadPath, savePath);
+            return ffmpegService.DownloadAndMoveEpisode(episodeInfo.StreamUrl, filename, configuration.DownloadPath, savePath, skip, duration);
         }
 
         public static string GetFileName(this EpisodeInfo episodeInfo)
