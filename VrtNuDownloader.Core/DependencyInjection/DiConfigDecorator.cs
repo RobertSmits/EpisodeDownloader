@@ -2,7 +2,7 @@
 
 namespace VrtNuDownloader.Core.DependencyInjection
 {
-    public class DiConfigDecorator : IDiConfig
+    public abstract class DiConfigDecorator : IDiConfig
     {
         private IDiConfig _diConfig;
 

@@ -17,7 +17,11 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
         private readonly IConfigService _configService;
         private readonly IFileService _fileService;
 
-        public VrtTokenService(IConfigService configService, IFileService fileService)
+        public VrtTokenService
+            (
+                IConfigService configService,
+                IFileService fileService
+            )
         {
             _configService = configService;
             _fileService = fileService;

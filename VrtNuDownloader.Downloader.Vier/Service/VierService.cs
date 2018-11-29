@@ -14,7 +14,8 @@ namespace VrtNuDownloader.Downloader.Vier.Service
         private readonly ILoggingService _logService;
         private readonly IVierAuthService _vierAuthService;
 
-        public VierService (
+        public VierService
+            (
                 ILoggingService logService,
                 IVierAuthService vierAuthService
             )

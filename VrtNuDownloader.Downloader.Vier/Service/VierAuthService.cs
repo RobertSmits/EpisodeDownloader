@@ -59,27 +59,5 @@ namespace VrtNuDownloader.Downloader.Vier.Service
             var resultJson = webClient.UploadString(url, payload);
             return JsonConvert.DeserializeObject<Authentication>(resultJson).AuthenticationResult;
         }
-
-        private string GetIdentityId()
-        {
-            var url = $"https://cognito-identity.{AWS_REGION}.amazonaws.com/";
-            var webClient = new WebClient();
-            webClient.Headers.Add("Content-Type", "application/x-amz-json-1.1");
-            webClient.Headers.Add("X-Amz-Target", "AWSCognitoIdentityService.GetId");
-            var payload = JsonConvert.SerializeObject(new IdentityIdRequestPayload(USER_POOL_ID, $"cognito-idp.{AWS_REGION}.amazonaws.com/eu-west-1_dViSsKM5Y", IdToken));
-            var resultJson = webClient.UploadString(url, payload);
-            return JsonConvert.DeserializeObject<IdentityIdResult>(resultJson).IdentityId;
-        }
-
-        public Credentials GetCredentials()
-        {
-            var url = $"https://cognito-identity.{AWS_REGION}.amazonaws.com/";
-            var webClient = new WebClient();
-            webClient.Headers.Add("Content-Type", "application/x-amz-json-1.1");
-            webClient.Headers.Add("X-Amz-Target", "AWSCognitoIdentityService.GetCredentialsForIdentity");
-            var payload = JsonConvert.SerializeObject(new CredentialRequestPayload(GetIdentityId(), $"cognito-idp.{AWS_REGION}.amazonaws.com/eu-west-1_dViSsKM5Y", IdToken));
-            var resultJson = webClient.UploadString(url, payload);
-            return JsonConvert.DeserializeObject<CredentialResult>(resultJson).Credentials;
-        }
     }
 }

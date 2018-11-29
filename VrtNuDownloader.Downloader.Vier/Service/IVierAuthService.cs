@@ -6,6 +6,5 @@ namespace VrtNuDownloader.Downloader.Vier.Service
     {
         string IdToken { get; }
         string AccessToken { get; }
-        Credentials GetCredentials();
     }
 }

@@ -39,16 +39,15 @@ namespace VrtNuDownloader
 
         private static IDiConfig LoadAllDiConfigs()
         {
-            var dllFileNames = Directory.GetFiles("./", "VrtNuDownloader.Downloader.*.dll");
-            var assemblies = dllFileNames.Select(Assembly.LoadFrom)
-              .ToList();
-            var decoratorTypes = assemblies.SelectMany(a => a.GetTypes())
-              .Where(t => !t.IsInterface && !t.IsAbstract)
-              .Where(t => t.IsSubclassOf(typeof(DiConfigDecorator)));
+            var decoratorTypes = Directory.GetFiles("./", "VrtNuDownloader.Downloader.*.dll")
+                                        .Select(Assembly.LoadFrom)
+                                        .SelectMany(a => a.GetTypes())
+                                        .Where(t => !t.IsInterface && !t.IsAbstract)
+                                        .Where(t => t.IsSubclassOf(typeof(DiConfigDecorator)))
+                                        .ToList();
 
             IDiConfig config = new DependencyInjectionConfig();
             config = decoratorTypes.Aggregate(config, (c, t) => (DiConfigDecorator)Activator.CreateInstance(t, new object[] { c }));
-
             return config;
         }
 
