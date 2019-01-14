@@ -43,11 +43,12 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
         public Uri[] GetShowSeasonEpisodes(Uri seasonUrl)
         {
             HtmlDocument html = new HtmlWeb().Load(seasonUrl);
-            return html.DocumentNode.SelectSingleNode("//ul[@aria-labelledby='episodelist-title']")
+            var seasonEpisodes = html.DocumentNode.SelectSingleNode("//ul[@aria-labelledby='episodelist-title']")
                 ?.SelectNodes(".//li//a")
                 ?.Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
                 .OrderBy(x => x.AbsoluteUri)
                 .ToArray();
+            return seasonEpisodes ?? (html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']") != null ? new Uri[] { seasonUrl } : null);
         }
 
         public VrtContent GetEpisodeInfo(Uri episodeUrl)

@@ -4,6 +4,7 @@ using System.Net;
 using Newtonsoft.Json;
 using VrtNuDownloader.Core.Models;
 using VrtNuDownloader.Core.Service.Logging;
+using VrtNuDownloader.Downloader.Vier;
 using VrtNuDownloader.Downloader.Vier.Models.Api;
 using System.Linq;
 
@@ -34,7 +35,7 @@ namespace VrtNuDownloader.Downloader.Vier.Service
                     x.SelectNodes(".//*[@class=\"video-teaser__title\"]//span")
                         ?.FirstOrDefault()
                         .InnerText
-                        .Contains(" - S") == true
+                        .ContainsAny(" - S", " - Aflevering") == true
                 );
 
             return playListItems.Select(x => new Uri(seasonUrl.Scheme + "://" + seasonUrl.Host + x.GetAttributeValue("href", ""))).ToArray();
@@ -46,13 +47,22 @@ namespace VrtNuDownloader.Downloader.Vier.Service
             var title = html.DocumentNode.SelectNodes("//*[contains(@class,'metadata__title')]").FirstOrDefault().InnerText;
             var titleParts = title.Split(" - ");
             var episodeId = GetEpisodeId(html);
-            return new EpisodeInfo {
-                ShowName = titleParts[0],
-                Season = titleParts[1].Replace("S", ""),
-                Episode = int.Parse(titleParts[2].Replace("Aflevering ", "")),
-                Title = "",
-                StreamUrl = GetStreamUrl(episodeId),
-            };
+
+            return titleParts.Count() == 2
+                ? new EpisodeInfo {
+                    ShowName = titleParts[0],
+                    Season = "1",
+                    Episode = int.Parse(titleParts[1].Replace("Aflevering ", "")),
+                    Title = "",
+                    StreamUrl = GetStreamUrl(episodeId),
+                }
+                : new EpisodeInfo {
+                    ShowName = titleParts[0],
+                    Season = titleParts[1].Replace("S", ""),
+                    Episode = int.Parse(titleParts[2].Replace("Aflevering ", "")),
+                    Title = "",
+                    StreamUrl = GetStreamUrl(episodeId),
+                };
         }
 
         public string GetEpisodeId(Uri episodeUrl)

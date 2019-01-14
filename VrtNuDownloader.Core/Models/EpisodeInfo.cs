@@ -41,13 +41,16 @@ namespace VrtNuDownloader.Core.Models
             if (int.TryParse(Season, out int seasonNr))
             {
                 var episodeNumber = Episode < 100 ? Episode.ToString("00") : Episode.ToString("000");
-                filename += ($" - S{seasonNr:00}E{episodeNumber} - {Title}.mp4");
+                filename += ($" - S{seasonNr:00}E{episodeNumber}");
             }
             else
             {
-                filename += ($" - S{seasonNr:00}E{Episode} - {Title}.mp4");
+                filename += ($" - S{seasonNr:00}E{Episode}");
             }
-            return filename;
+            if (!string.IsNullOrWhiteSpace(Title)) {
+                filename += $" - {Title}";
+            }
+            return filename + ".mp4";
         }
     }
 }
