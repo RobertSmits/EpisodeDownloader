@@ -48,7 +48,7 @@ namespace VrtNuDownloader.Downloader.Vier
         {
             _logService.WriteLog(MessageType.Info, "Current show: " + episodeUrl);
             var episodes = _vierService.GetShowSeasonEpisodes(episodeUrl);
-            if (episodes == null)
+            if (!episodes.Any())
             {
                 _logService.WriteLog(MessageType.Info, "No Episodes Available");
                 return;

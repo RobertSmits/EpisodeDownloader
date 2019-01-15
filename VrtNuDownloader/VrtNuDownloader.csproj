@@ -15,6 +15,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VrtNuDownloader.Core\VrtNuDownloader.Core.csproj" />
+    <ProjectReference Include="..\VrtNuDownloader.Downloader.Vrt\VrtNuDownloader.Downloader.Vrt.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Targets>Build;DebugSymbolsProjectOutputGroup</Targets>
+    </ProjectReference>
+    <ProjectReference Include="..\VrtNuDownloader.Downloader.Vier\VrtNuDownloader.Downloader.Vier.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Targets>Build;DebugSymbolsProjectOutputGroup</Targets>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

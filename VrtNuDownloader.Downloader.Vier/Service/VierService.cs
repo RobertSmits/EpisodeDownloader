@@ -29,16 +29,19 @@ namespace VrtNuDownloader.Downloader.Vier.Service
         {
             var html = new HtmlWeb().Load(seasonUrl);
             var playListItems = html.DocumentNode.SelectNodes("//*[@class=\"playlist__items\"]")
-                ?.FirstOrDefault()
-                ?.SelectNodes(".//a")
+                .FirstOrDefault()
+                ?.SelectNodes(".//a");
+            if (playListItems == null)
+                return new Uri[]{};
+
+            return playListItems
                 .Where(x =>
                     x.SelectNodes(".//*[@class=\"video-teaser__title\"]//span")
                         ?.FirstOrDefault()
                         .InnerText
                         .ContainsAny(" - S", " - Aflevering") == true
-                );
-
-            return playListItems.Select(x => new Uri(seasonUrl.Scheme + "://" + seasonUrl.Host + x.GetAttributeValue("href", ""))).ToArray();
+                ).Select(x => new Uri(seasonUrl.Scheme + "://" + seasonUrl.Host + x.GetAttributeValue("href", "")))
+                .ToArray();
         }
 
         public EpisodeInfo GetEpisodeInfo(Uri episodeUrl)
