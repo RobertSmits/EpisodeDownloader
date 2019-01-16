@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
-using VrtNuDownloader.Core.Interfaces;
-using VrtNuDownloader.Core.Service.Logging;
+using VrtNuDownloader.Core.Downloader;
+using VrtNuDownloader.Core.Context;
 
 namespace VrtNuDownloader
 {
@@ -11,11 +11,11 @@ namespace VrtNuDownloader
     {
         public void Run(IEnumerable<Uri> ShowUrls)
         {
-            var defaultDownloader = DependencyInjectionConfig.Container.GetService<DefaultDownloader>();
+            var defaultDownloader = Context.Container.GetService<DefaultDownloader>();
 
             foreach (var showUrl in ShowUrls)
             {
-                var handler = DependencyInjectionConfig.Container
+                var handler = Context.Container
                     .GetServices<IDownloader>()
                     .FirstOrDefault(x => x.CanHandleUrl(showUrl))
                     ?? defaultDownloader;

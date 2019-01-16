@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VrtNuDownloader.Core.Interfaces
+namespace VrtNuDownloader.Core.Downloader
 {
     public interface IDownloader
     {

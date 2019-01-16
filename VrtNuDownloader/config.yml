@@ -1,0 +1,14 @@
+VrtNuDownloader:
+    DownloadPath: Downloads
+    SavePath: Downloads
+    SaveShowsInFolders: true
+    SaveSeasonsInFolders: true
+    WatchUrls: []
+Logging:
+    LogLevel:
+        Default: Information
+VrtDownloader:
+    VrtLoginRt:
+VierDownloader:
+    LastAuthUser:
+    RefreshToken:

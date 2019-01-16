@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
-using VrtNuDownloader.Core.Service.Config;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using VrtNuDownloader.Core;
+using VrtNuDownloader.Core.Context;
 
 namespace VrtNuDownloader
 {
@@ -9,9 +12,13 @@ namespace VrtNuDownloader
     {
         static void Main(string[] args)
         {
-            var container = DependencyInjectionConfig.Container;
-            var showUrls = container.GetRequiredService<IConfigService>().WatchUrls.Select(x => new Uri(x));
-            container.GetService<EpisodeDownloader>().Run(showUrls);
+            Bootstrapper.Bootstrap();
+            var logger = Context.Container.GetRequiredService<ILogger<Program>>();
+            logger.LogDebug("Startup complete");
+            var config = Context.Container.GetRequiredService<IOptions<Configuration>>().Value;
+            if (config.WatchUrls == null) return;
+            var showUrls = config.WatchUrls.Select(x => new Uri(x));
+            Context.Container.GetService<EpisodeDownloader>().Run(showUrls);
         }
     }
 }

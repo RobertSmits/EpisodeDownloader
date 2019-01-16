@@ -1,13 +1,10 @@
 using System;
-using System.IO;
 using System.Linq;
-using VrtNuDownloader.Core.Interfaces;
+using Microsoft.Extensions.Logging;
+using VrtNuDownloader.Core.Downloader;
+using VrtNuDownloader.Core.Extensions;
 using VrtNuDownloader.Core.Models;
-using VrtNuDownloader.Core.Service.Config;
-using VrtNuDownloader.Core.Service.Ffmpeg;
-using VrtNuDownloader.Core.Service.File;
 using VrtNuDownloader.Core.Service.History;
-using VrtNuDownloader.Core.Service.Logging;
 using VrtNuDownloader.Downloader.Vrt.Models.Api;
 using VrtNuDownloader.Downloader.Vrt.Service;
 
@@ -15,29 +12,20 @@ namespace VrtNuDownloader.Downloader.Vrt
 {
     public class VrtDownloader : IDownloader
     {
-        private readonly ILoggingService _logService;
-        private readonly IFileService _fileService;
-        private readonly IVrtNuService _vrtNuService;
-        private readonly IFfmpegService _ffmpegService;
-        private readonly IConfigService _configService;
+        private readonly ILogger _logger;
         private readonly IHistoryService _historyService;
+        private readonly IVrtNuService _vrtNuService;
 
         public VrtDownloader
             (
-                ILoggingService logService,
-                IFileService fileService,
-                IVrtNuService vrtNuService,
-                IFfmpegService ffmpegService,
-                IConfigService configService,
-                IHistoryService historyService
+                ILogger<VrtDownloader> logger,
+                IHistoryService historyService,
+                IVrtNuService vrtNuService
             )
         {
-            _logService = logService;
-            _fileService = fileService;
-            _vrtNuService = vrtNuService;
-            _ffmpegService = ffmpegService;
-            _configService = configService;
+            _logger = logger;
             _historyService = historyService;
+            _vrtNuService = vrtNuService;
         }
 
         public bool CanHandleUrl(Uri episodeUrl)
@@ -47,11 +35,11 @@ namespace VrtNuDownloader.Downloader.Vrt
 
         public void Handle(Uri episodeUrl)
         {
-            _logService.WriteLog(MessageType.Info, "Current show: " + episodeUrl);
+            _logger.LogInformation("Current show: " + episodeUrl);
             var seasons = _vrtNuService.GetShowSeasons(episodeUrl);
             if (seasons == null)
             {
-                _logService.WriteLog(MessageType.Info, "No Seasons Available");
+                _logger.LogInformation("No Seasons Available");
                 return;
             }
 
@@ -60,17 +48,17 @@ namespace VrtNuDownloader.Downloader.Vrt
                 var episodes = _vrtNuService.GetShowSeasonEpisodes(season);
                 if (episodes == null)
                 {
-                    _logService.WriteLog(MessageType.Info, "No Episodes Available");
+                    _logger.LogInformation("No Episodes Available");
                     continue;
                 }
                 foreach (var episode in episodes)
                 {
-                    _logService.WriteLog(MessageType.Info, "Current url: " + episode.ToString());
+                    _logger.LogInformation("Current url: " + episode.ToString());
                     var status = _historyService.CheckIfDownloaded(episode) ? -1 : DownloadEpisode(episode);
-                    if (status == -1) _logService.WriteLog(MessageType.Info, "Already downloaded, skipped");
-                    if (status == 0) _logService.WriteLog(MessageType.Info, "Downnload Finished");
-                    if (status == 1) _logService.WriteLog(MessageType.Error, "Couldn't find a valid M3U8");
-                    if (status == 2) _logService.WriteLog(MessageType.Error, "Error running ffmpeg");
+                    if (status == -1) _logger.LogInformation("Already downloaded(skipped");
+                    if (status == 0) _logger.LogInformation("Downnload Finished");
+                    if (status == 1) _logger.LogError("Couldn't find a valid M3U8");
+                    if (status == 2) _logger.LogError("Error running ffmpeg");
                 }
             }
         }
@@ -85,7 +73,7 @@ namespace VrtNuDownloader.Downloader.Vrt
             }
             catch (Exception e)
             {
-                _logService.WriteLog(MessageType.Error, $"Error while downloading {episodeInfo.name}. StackTrace: {e.ToString()} {e.StackTrace}");
+                _logger.LogError(e, $"Error while downloading {episodeInfo.name}. StackTrace: {e.ToString()} {e.StackTrace}");
                 return 3;
             }
             var episodeDownloadUrl = pubInfo.targetUrls.Where(x => x.type.ToLower() == "hls")
@@ -105,8 +93,8 @@ namespace VrtNuDownloader.Downloader.Vrt
                 StreamUrl = episodeDownloadUrl
             };
 
-            _logService.WriteLog(MessageType.Info, $"Downloading {episodeInfo.name}");
-            var processOutput = epInfo.DownloadToFolder(_fileService, _configService, _ffmpegService);
+            _logger.LogInformation($"Downloading {episodeInfo.name}");
+            var processOutput = epInfo.DownloadToFolder();
             if (!processOutput) return 2;
 
             _historyService.AddDownloaded(episodeInfo.name, episodeUrl, episodeDownloadUrl);

@@ -3,8 +3,6 @@ using System;
 using System.Net;
 using Newtonsoft.Json;
 using VrtNuDownloader.Core.Models;
-using VrtNuDownloader.Core.Service.Logging;
-using VrtNuDownloader.Downloader.Vier;
 using VrtNuDownloader.Downloader.Vier.Models.Api;
 using System.Linq;
 
@@ -12,16 +10,10 @@ namespace VrtNuDownloader.Downloader.Vier.Service
 {
     public class VierService : IVierService
     {
-        private readonly ILoggingService _logService;
         private readonly IVierAuthService _vierAuthService;
 
-        public VierService
-            (
-                ILoggingService logService,
-                IVierAuthService vierAuthService
-            )
+        public VierService(IVierAuthService vierAuthService)
         {
-            _logService = logService;
             _vierAuthService = vierAuthService;
         }
 
@@ -52,14 +44,16 @@ namespace VrtNuDownloader.Downloader.Vier.Service
             var episodeId = GetEpisodeId(html);
 
             return titleParts.Count() == 2
-                ? new EpisodeInfo {
+                ? new EpisodeInfo
+                {
                     ShowName = titleParts[0],
                     Season = "1",
                     Episode = int.Parse(titleParts[1].Replace("Aflevering ", "")),
                     Title = "",
                     StreamUrl = GetStreamUrl(episodeId),
                 }
-                : new EpisodeInfo {
+                : new EpisodeInfo
+                {
                     ShowName = titleParts[0],
                     Season = titleParts[1].Replace("S", ""),
                     Episode = int.Parse(titleParts[2].Replace("Aflevering ", "")),

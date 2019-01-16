@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using VrtNuDownloader.Core.Context;
 using VrtNuDownloader.Core.DependencyInjection;
-using VrtNuDownloader.Core.Interfaces;
+using VrtNuDownloader.Core.Downloader;
 using VrtNuDownloader.Downloader.Vier.Service;
 
 namespace VrtNuDownloader.Downloader.Vier
@@ -13,6 +14,7 @@ namespace VrtNuDownloader.Downloader.Vier
             serviceCollection.AddTransient<IDownloader, VierDownloader>();
             serviceCollection.AddSingleton<IVierService, VierService>();
             serviceCollection.AddSingleton<IVierAuthService, VierAuthService>();
+            serviceCollection.Configure<VierConfiguration>(Context.Configuration.GetSection(nameof(VierDownloader)));
         }
 
         public VierDiConfig(IDiConfig diConfig)

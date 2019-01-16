@@ -9,12 +9,15 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/VrtNuDownloader/bin/Debug/netcoreapp2.1/VrtNuDownloader.dll",
+            "program": "${workspaceFolder}/VrtNuDownloader/bin/Debug/netcoreapp2.2/VrtNuDownloader.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/VrtNuDownloader/bin/Debug/netcoreapp2.1/",
+            "cwd": "${workspaceFolder}/VrtNuDownloader/bin/Debug/netcoreapp2.2/",
             "console": "internalConsole",
             "stopAtEntry": false,
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
         },
         {
             "name": ".NET Core Attach",

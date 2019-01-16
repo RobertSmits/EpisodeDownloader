@@ -1,25 +1,25 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Net;
-using VrtNuDownloader.Core.Service.Logging;
 using VrtNuDownloader.Downloader.Vrt.Models.Api;
 
 namespace VrtNuDownloader.Downloader.Vrt.Service
 {
     public class VrtNuService : IVrtNuService
     {
-        private readonly ILoggingService _logService;
+        private readonly ILogger _logger;
         private readonly IVrtTokenService _vrtTokenService;
 
         public VrtNuService
             (
-                ILoggingService logService,
+                ILogger<VrtNuService> logger,
                 IVrtTokenService vrtTokenService
             )
         {
-            _logService = logService;
+            _logger = logger;
             _vrtTokenService = vrtTokenService;
         }
 
@@ -75,7 +75,7 @@ namespace VrtNuDownloader.Downloader.Vrt.Service
             }
             catch
             {
-                _logService.WriteLog(MessageType.Error, "Old episode info failed");
+                _logger.LogError("Old episode info failed");
             }
             finally
             {

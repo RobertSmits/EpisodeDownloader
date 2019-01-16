@@ -1,38 +1,27 @@
 ﻿using System;
 using System.Linq;
-using VrtNuDownloader.Core.Interfaces;
-using VrtNuDownloader.Core.Service.Config;
-using VrtNuDownloader.Core.Service.Ffmpeg;
-using VrtNuDownloader.Core.Service.File;
+using Microsoft.Extensions.Logging;
+using VrtNuDownloader.Core.Downloader;
+using VrtNuDownloader.Core.Extensions;
 using VrtNuDownloader.Core.Service.History;
-using VrtNuDownloader.Core.Service.Logging;
 using VrtNuDownloader.Downloader.Vier.Service;
 
 namespace VrtNuDownloader.Downloader.Vier
 {
     public class VierDownloader : IDownloader
     {
-        private readonly ILoggingService _logService;
-        private readonly IFileService _fileService;
-        private readonly IFfmpegService _ffmpegService;
-        private readonly IConfigService _configService;
+        private readonly ILogger _logger;
         private readonly IHistoryService _historyService;
         private readonly IVierService _vierService;
 
         public VierDownloader
             (
-                ILoggingService logService,
-                IFileService fileService,
-                IFfmpegService ffmpegService,
-                IConfigService configService,
+                ILogger<VierDownloader> logger,
                 IHistoryService historyService,
                 IVierService vierService
             )
         {
-            _logService = logService;
-            _fileService = fileService;
-            _ffmpegService = ffmpegService;
-            _configService = configService;
+            _logger = logger;
             _historyService = historyService;
             _vierService = vierService;
         }
@@ -46,29 +35,29 @@ namespace VrtNuDownloader.Downloader.Vier
 
         public void Handle(Uri episodeUrl)
         {
-            _logService.WriteLog(MessageType.Info, "Current show: " + episodeUrl);
+            _logger.LogInformation("Current show: " + episodeUrl);
             var episodes = _vierService.GetShowSeasonEpisodes(episodeUrl);
             if (!episodes.Any())
             {
-                _logService.WriteLog(MessageType.Info, "No Episodes Available");
+                _logger.LogInformation("No Episodes Available");
                 return;
             }
             foreach (var episode in episodes)
             {
-                _logService.WriteLog(MessageType.Info, "Current url: " + episode.ToString());
+                _logger.LogInformation("Current url: " + episode.ToString());
                 var status = _historyService.CheckIfDownloaded(episode) ? -1 : DownloadEpisode(episode);
-                if (status == -1) _logService.WriteLog(MessageType.Info, "Already downloaded, skipped");
-                if (status == 0) _logService.WriteLog(MessageType.Info, "Downnload Finished");
-                if (status == 1) _logService.WriteLog(MessageType.Error, "Couldn't find a valid M3U8");
-                if (status == 2) _logService.WriteLog(MessageType.Error, "Error running ffmpeg");
+                if (status == -1) _logger.LogInformation("Already downloaded(skipped");
+                if (status == 0) _logger.LogInformation("Downnload Finished");
+                if (status == 1) _logger.LogError("Couldn't find a valid M3U8");
+                if (status == 2) _logger.LogError("Error running ffmpeg");
             }
         }
 
         private int DownloadEpisode(Uri episodeUrl)
         {
             var epInfo = _vierService.GetEpisodeInfo(episodeUrl);
-            _logService.WriteLog(MessageType.Info, $"Downloading {epInfo.GetFileName()}");
-            var processOutput = epInfo.DownloadToFolder(_fileService, _configService, _ffmpegService);
+            _logger.LogInformation($"Downloading {epInfo.GetFileName()}");
+            var processOutput = epInfo.DownloadToFolder();
             if (!processOutput) return 2;
 
             _historyService.AddDownloaded(episodeUrl.AbsolutePath.Split('/').Last(), episodeUrl, epInfo.StreamUrl);

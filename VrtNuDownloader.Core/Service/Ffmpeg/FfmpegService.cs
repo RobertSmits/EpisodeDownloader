@@ -12,13 +12,12 @@ namespace VrtNuDownloader.Core.Service.Ffmpeg
         {
             _fileService = fileService;
         }
-        
+
         public bool DownloadAndMoveEpisode(Uri streamUrl, string fileName, string downloadPath, string savePath)
         {
             var downloadFilePath = Path.Combine(downloadPath, fileName);
             var result = DownloadEpisode(streamUrl, downloadFilePath);
             if (result == false) return false;
-
 
             savePath = Path.Combine(savePath, fileName);
             _fileService.MoveFile(downloadFilePath, savePath);

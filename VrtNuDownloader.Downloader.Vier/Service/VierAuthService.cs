@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Net;
-using VrtNuDownloader.Core.Service.Config;
-using VrtNuDownloader.Core.Service.File;
 using VrtNuDownloader.Downloader.Vier.Models.Auth;
 
 namespace VrtNuDownloader.Downloader.Vier.Service
@@ -15,49 +15,45 @@ namespace VrtNuDownloader.Downloader.Vier.Service
 
         private DateTime _expireDate;
         private AuthenticationResult _authenticationResult;
-        private readonly IConfigService _configService;
+        private readonly ILogger _logger;
+        private readonly VierConfiguration _configService;
 
-        public VierAuthService(IConfigService configService)
+        public VierAuthService
+            (
+                ILogger<VierAuthService> logger,
+                IOptionsMonitor<VierConfiguration> configMonitor
+            )
         {
-            _configService = configService;
+            _logger = logger;
+            _configService = configMonitor.CurrentValue;
         }
 
         public string IdToken
         {
             get
             {
-                RefreshIfNeeded();
+                if (_authenticationResult == null || _expireDate <= DateTime.Now)
+                {
+                    _authenticationResult = RefreshTokens(_configService.RefreshToken);
+                    _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
+                }
                 return _authenticationResult.IdToken;
-            }
-        }
-
-        public string AccessToken
-        {
-            get
-            {
-                RefreshIfNeeded();
-                return _authenticationResult.AccessToken;
-            }
-        }
-
-        private void RefreshIfNeeded()
-        {
-            if (_authenticationResult == null || _expireDate <= DateTime.Now)
-            {
-                _authenticationResult = RefreshTokens(_configService.VierRefreshToken);
-                _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
             }
         }
 
         private AuthenticationResult RefreshTokens(string refreshToken)
         {
+            _logger.LogDebug("Refreshing login token");
+            _logger.LogTrace("RefreshToken: " + refreshToken);
             var url = $"https://cognito-idp.{AWS_REGION}.amazonaws.com/";
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/x-amz-json-1.1");
             webClient.Headers.Add("X-Amz-Target", "AWSCognitoIdentityProviderService.InitiateAuth");
             var payload = JsonConvert.SerializeObject(new RefreshRequestPayload(CLIENT_ID, refreshToken));
             var resultJson = webClient.UploadString(url, payload);
-            return JsonConvert.DeserializeObject<Authentication>(resultJson).AuthenticationResult;
+            var authResult = JsonConvert.DeserializeObject<Authentication>(resultJson).AuthenticationResult;
+            _logger.LogTrace("IdToken: " + authResult.IdToken);
+            return authResult;
         }
     }
 }
