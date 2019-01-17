@@ -1,4 +1,4 @@
-# VrtNuDownloader
+# EpisodeDownloader
 
 A downloader for [VRT Nu](https://www.vrt.be/vrtnu/)
 
@@ -13,7 +13,7 @@ Building the project can be done from Visual Studio or from the comand line
 ```
 > dotnet publish -c Release
 > cd bin\Release\netcoreapp2.0
-> dotnet .\VrtNuDownloader
+> dotnet .\EpisodeDownloader
 ```
 
 ## Configuration
