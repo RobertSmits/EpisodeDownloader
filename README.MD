@@ -1,25 +1,71 @@
 # EpisodeDownloader
 
-A downloader for [VRT Nu](https://www.vrt.be/vrtnu/)
+A downloader for [VRT Nu](https://www.vrt.be/vrtnu/) and [Vier](https://www.vier.be/)
+
+## Requirements
+
+This project uses the .NET Core 2.2 runtime.
+To build this project you need to have the .NET Core 2.2 SDK installed on your system.
+If you only want to run the compiled binary the .NET Core 2.2 Runtime will do.
+
+[download link](https://github.com/dotnet/core/tree/master/release-notes/2.2)
 
 ## Building
 
-This project uses the .NET Core 2.0 runtime.
-To build this project you need to have the .NET Core 2.0 SDK installed on your system. [download link](https://github.com/dotnet/core/blob/master/release-notes/download-archives/2.0.9-download.md)
-
-
 Building the project can be done from Visual Studio or from the comand line
 
+``` bash
+$ dotnet build -c Release
 ```
-> dotnet publish -c Release
-> cd bin\Release\netcoreapp2.0
-> dotnet .\EpisodeDownloader
+
+## Running
+
+After building the project you can run the program by navigating to the outpt folder and starting the dotnet executable
+
+``` bash
+$ cd bin/Release/netcoreapp2.2
+$ dotnet ./EpisodeDownloader
 ```
 
 ## Configuration
 
-When the program runs the first time it wil create a configuration file `config.yml` and a SQLite 3 database `config.db`.
+Program configuration is done using the `config.yml` file.
 Using your preffered editor you can change the configuration according to the [YAML](http://yaml.org/spec/1.1/) spesificaton.
+
+### Basic Configuration
+
+The `EpisodeDownloader` section of the configuration file contains the core configuration
+
+``` yaml
+EpisodeDownloader:
+    DownloadPath: /tmp          # Path where new episodes wil be downloaded to
+    SavePath: Downloads         # Completed episodes wil be moved here
+    SaveShowsInFolders: true    # Create separate sub folders per show
+    SaveSeasonsInFolders: true  # Create separate sub folders per season
+    WatchUrls:                  # Urls to watch
+        - https://www.vrt.be/vrtnu/a-z/w817.relevant/
+        - https://www.vrt.be/vrtnu/a-z/thuis.relevant/
+```
+
+# Plugins
+
+## VrtDownloader
+
+Plugin providing downloader for [VRT Nu](https://www.vrt.be/vrtnu/)
+
+### Configuration
+
+This plugin adds folowing section to `config.yml`
+
+``` yaml
+VrtDownloader:
+    Email:      # Your VrtNu email
+    Password:   # Your VrtNu password
+```
+
+### Authentication
+
+This plugin uses email address and password for authentication, these need to be added in the config file
 
 ### Show URLs
 
@@ -49,49 +95,55 @@ Show url:
 https://www.vrt.be/vrtnu/a-z/thuis.relevant/
 ```
 
-### Cookies
+### Config Sample
 
-This program uses a cookie for authentication, this needs to be added in the config file.
-
-To get this cookie go to [VRT Nu](https://www.vrt.be/vrtnu/) and log in.
-
-Using your browser developer tools find the sites cookies and search for a cookie named `vrtlogin-rt`.
-Copy this cookies contents and place it in the config file. Now delete your browser cookies on VRT Nu.
-
-After the first download your config's cookie will be cleared and you wil see a new file named `.cookies.yml`.
-This file contains all cookies needed and their expiration times.
-__Dont delete this file!__ 
-
-### Config Example
-
-```
-Cookie: a verry long secret string
-DownloadPath: Downloads
-SavePath: Downloads
-SaveShowsInFolders: true
-SaveSeasonsInFolders: true
-WatchUrls:
-- https://www.vrt.be/vrtnu/a-z/w817.relevant/
-- https://www.vrt.be/vrtnu/a-z/thuis.relevant/
-
+``` yaml
+EpisodeDownloader:
+    WatchUrls:
+        - https://www.vrt.be/vrtnu/a-z/w817.relevant/
+        - https://www.vrt.be/vrtnu/a-z/thuis.relevant/
+VrtDownloader:
+    Email: foo@bar.com
+    Password:  FooBar
 ```
 
-## Run
+## VierDownloader
 
-You are now ready to download your shows.
-Run the program again and it will start downloading.
+Plugin providing downloader for [Vier](https://www.vier.be/)
 
-## Other Options
+### Configuration
 
-The config file has a few more options explained here
+This plugin adds folowing section to `config.yml`
 
-| Option | Type | Usage |
-| --- | --- | --- |
-| Email | string | Not Used |
-| Password | string | Not Used |
-| Cookie | string | Vrt Nu refresh token, used for login on initial run |
-| DownloadPath | string | Path where files get downloaded |
-| SavePath | string | Path where files get placed after download |
-| SaveShowsInFolders | boolean | In the DownloadPath create separate folders for each show |
-| SaveSeasonsInFolders | boolean | reate separate folders for each season |
-| WatchUrls | array | Shows to watch |
+``` yaml
+VierDownloader:
+    Email:      # Your Vier email
+    Password:   # Your Vier password
+
+```
+
+### Authentication
+
+This plugin uses email address and password for authentication, these need to be added in the config file
+
+### Show URLs
+
+TODO
+
+#### Example:
+
+```
+https://www.vier.be/video/callboys/callboys-seizoen-1/
+```
+
+### Config Sample
+
+``` yaml
+EpisodeDownloader:
+    WatchUrls:
+        - https://www.vier.be/video/de-dag/de-dag/de-dag-aflevering-1/
+        - https://www.vier.be/video/callboys/callboys-seizoen-1/
+VierDownloader:
+    Email: foo@bar.com
+    Password:  FooBar
+```
