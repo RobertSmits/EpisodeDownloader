@@ -38,4 +38,13 @@
     </ProjectReference>
   </ItemGroup>
 
+  <Target Name="CopyPDBfile" AfterTargets="Build">
+    <!-- Copy dependencies from refernced projects. -->
+    <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.Core.dll" DestinationFolder="$(TargetDir)" />
+    <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.SecurityToken.dll" DestinationFolder="$(TargetDir)" />
+    <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.CognitoIdentity.dll" DestinationFolder="$(TargetDir)" />
+    <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.CognitoIdentityProvider.dll" DestinationFolder="$(TargetDir)" />
+    <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.Extensions.CognitoAuthentication.dll" DestinationFolder="$(TargetDir)" />
+  </Target>
+
 </Project>

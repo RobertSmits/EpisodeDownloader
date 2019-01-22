@@ -3,7 +3,12 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Net;
-using EpisodeDownloader.Downloader.Vier.Models.Auth;
+using Amazon.CognitoIdentityProvider;
+using Amazon.Extensions.CognitoAuthentication;
+using System.Threading.Tasks;
+using Amazon.CognitoIdentityProvider.Model;
+using Amazon;
+using Amazon.Runtime;
 
 namespace EpisodeDownloader.Downloader.Vier.Service
 {
@@ -11,12 +16,14 @@ namespace EpisodeDownloader.Downloader.Vier.Service
     {
         const string AWS_REGION = "eu-west-1";
         const string CLIENT_ID = "6s1h851s8uplco5h6mqh1jac8m";
-        const string USER_POOL_ID = "eu-west-1:8b7eb22c-cf61-43d5-a624-04b494867234";
+        const string USER_POOL_ID = "eu-west-1_dViSsKM5Y";
 
         private DateTime _expireDate;
-        private AuthenticationResult _authenticationResult;
+        private AuthenticationResultType _authenticationResult;
         private readonly ILogger _logger;
-        private readonly VierConfiguration _configService;
+        private readonly VierConfiguration _configuration;
+        private readonly AmazonCognitoIdentityProviderClient _provider;
+        private readonly CognitoUserPool _userPool;
 
         public VierAuthService
             (
@@ -25,35 +32,54 @@ namespace EpisodeDownloader.Downloader.Vier.Service
             )
         {
             _logger = logger;
-            _configService = configMonitor.CurrentValue;
+            _configuration = configMonitor.CurrentValue;
+            var cred = new AnonymousAWSCredentials();
+            _provider = new AmazonCognitoIdentityProviderClient(cred, RegionEndpoint.EUWest1);
+            _userPool = new CognitoUserPool(USER_POOL_ID, CLIENT_ID, _provider);
         }
 
         public string IdToken
         {
             get
             {
-                if (_authenticationResult == null || _expireDate <= DateTime.Now)
+                if (_authenticationResult == null)
                 {
-                    _authenticationResult = RefreshTokens(_configService.RefreshToken);
+                    _authenticationResult = LoginAsync(_configuration.Email, _configuration.Password).Result;
+                    _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
+                }
+                else if (_expireDate <= DateTime.Now)
+                {
+                    _authenticationResult = RefreshTokens(_configuration.RefreshToken).Result;
                     _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
                 }
                 return _authenticationResult.IdToken;
             }
         }
 
-        private AuthenticationResult RefreshTokens(string refreshToken)
+        private async Task<AuthenticationResultType> LoginAsync(string username, string password)
+        {
+            _logger.LogDebug("Login attampt");
+            _logger.LogTrace("Username: " + username);
+            _logger.LogTrace("Password: " + password);
+            CognitoUser user = new CognitoUser(username, CLIENT_ID, _userPool, _provider);
+            AuthFlowResponse context = await user.StartWithSrpAuthAsync(new InitiateSrpAuthRequest
+            {
+                Password = password
+            }).ConfigureAwait(false);
+            return context.AuthenticationResult;
+        }
+
+        private async Task<AuthenticationResultType> RefreshTokens(string refreshToken)
         {
             _logger.LogDebug("Refreshing login token");
             _logger.LogTrace("RefreshToken: " + refreshToken);
-            var url = $"https://cognito-idp.{AWS_REGION}.amazonaws.com/";
-            var webClient = new WebClient();
-            webClient.Headers.Add("Content-Type", "application/x-amz-json-1.1");
-            webClient.Headers.Add("X-Amz-Target", "AWSCognitoIdentityProviderService.InitiateAuth");
-            var payload = JsonConvert.SerializeObject(new RefreshRequestPayload(CLIENT_ID, refreshToken));
-            var resultJson = webClient.UploadString(url, payload);
-            var authResult = JsonConvert.DeserializeObject<Authentication>(resultJson).AuthenticationResult;
-            _logger.LogTrace("IdToken: " + authResult.IdToken);
-            return authResult;
+            CognitoUser user = new CognitoUser(null, CLIENT_ID, _userPool, _provider);
+            user.SessionTokens = new CognitoUserSession(null, null, refreshToken, DateTime.Now, DateTime.Now.AddDays(3));
+            AuthFlowResponse context = await user.StartWithRefreshTokenAuthAsync(new InitiateRefreshTokenAuthRequest
+            {
+                AuthFlowType = AuthFlowType.REFRESH_TOKEN_AUTH
+            }).ConfigureAwait(false);
+            return context.AuthenticationResult;
         }
     }
 }
