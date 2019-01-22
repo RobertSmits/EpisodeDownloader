@@ -6,53 +6,33 @@ using System.Net;
 using EpisodeDownloader.Core.Models;
 using EpisodeDownloader.Core.Service.File;
 using EpisodeDownloader.Downloader.Vrt.Models.Auth;
+using EpisodeDownloader.Downloader.Vrt.Extensions;
 
 namespace EpisodeDownloader.Downloader.Vrt.Service
 {
     public class VrtTokenService : IVrtTokenService
     {
-        const string TOKEN_FILE = ".vrt-cookies.yml";
+        const string GIGYA_API_KEY = "3_0Z2HujMtiWq_pkAjgnS2Md2E11a1AwZjYiBETtwNE-EoEHDINgtnvcAOpNgmrVGy";
 
-        private VrtTokenSet _vrtTokenSet;
         private VrtPlayerTokenSet _vrtPlayerTokenSet;
         private readonly ILogger _logger;
         private readonly VrtConfiguration _configuration;
-        private readonly IFileService _fileService;
 
         public VrtTokenService
             (
                 ILogger<VrtTokenService> logger,
-                IOptionsMonitor<VrtConfiguration> configMonitor,
-                IFileService fileService
+                IOptionsMonitor<VrtConfiguration> configMonitor
             )
         {
             _logger = logger;
             _configuration = configMonitor.CurrentValue;
-            _fileService = fileService;
-            LoadTokens();
-        }
-
-        private void LoadTokens()
-        {
-            var hasTokens = _fileService.CheckFileExists(TOKEN_FILE);
-            if (hasTokens)
-            {
-                var tokenContainer = _fileService.ReadYamlFile<VrtTokenContainer>(TOKEN_FILE);
-                _vrtTokenSet = tokenContainer.VrtTokenSet;
-                _vrtPlayerTokenSet = tokenContainer.VrtPlayerTokenSet;
-            }
         }
 
         public string VrtToken
         {
             get
             {
-                if (_vrtTokenSet == null || new UnixTimeStamp(_vrtTokenSet.expiry) <= UnixTimeStamp.Now)
-                {
-                    _vrtTokenSet = RefreshTokenSet(_vrtTokenSet?.refreshtoken ?? _configuration.VrtLoginRt);
-                    _fileService.WriteYamlFile(new VrtTokenContainer { VrtTokenSet = _vrtTokenSet, VrtPlayerTokenSet = _vrtPlayerTokenSet }, TOKEN_FILE);
-                }
-                return _vrtTokenSet.vrtnutoken;
+                return GetVrtToken(_configuration.Email, _configuration.Password);
             }
         }
 
@@ -61,32 +41,50 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
             get
             {
                 if (_vrtPlayerTokenSet == null || _vrtPlayerTokenSet?.expirationDate <= DateTime.Now.ToUniversalTime())
-                {
                     _vrtPlayerTokenSet = RefreshPlayerToken();
-                    _fileService.WriteYamlFile(new VrtTokenContainer { VrtTokenSet = _vrtTokenSet, VrtPlayerTokenSet = _vrtPlayerTokenSet }, TOKEN_FILE);
-                }
                 return _vrtPlayerTokenSet.vrtPlayerToken;
             }
         }
 
-        private VrtTokenSet RefreshTokenSet(string refreshToken)
+        private GigyaAuthResponse GetGigyaAuth(string username, string password)
         {
-            _logger.LogDebug("Refreshing login token");
-            _logger.LogTrace("RefreshToken: " + refreshToken);
-            var url = "https://token.vrt.be/refreshtoken";
+            _logger.LogDebug("Logging in to Gigya");
+            _logger.LogTrace("Username: " + username);
+            _logger.LogTrace("Password: " + password);
+            var url = new Uri("https://accounts.eu1.gigya.com/accounts.login")
+                .AddParameter("APIKey", GIGYA_API_KEY)
+                .AddParameter("targetEnv", "jssdk")
+                .AddParameter("loginID", username)
+                .AddParameter("password", password)
+                .AddParameter("authMode", "cookie");
             var webClient = new WebClient();
-            webClient.Headers.Add("cookie", $"vrtlogin-rt={refreshToken};");
             var contentJson = webClient.DownloadString(url);
-            var tokenSet = JsonConvert.DeserializeObject<VrtTokenSet>(contentJson);
-            _logger.LogTrace("New VrtToken: " + tokenSet.vrtnutoken);
-            _logger.LogTrace("New RefreshToken: " + tokenSet.refreshtoken);
-            return tokenSet;
+            return JsonConvert.DeserializeObject<GigyaAuthResponse>(contentJson);
+        }
+
+        private string GetVrtToken(string username, string password)
+        {
+            _logger.LogDebug("Loggin in to VRT");
+            var gigyaResponse = GetGigyaAuth(username, password);
+            var url = new Uri("https://token.vrt.be");
+            var webClient = new WebClient();
+            webClient.Headers.Add("Content-Type", "application/json");
+            webClient.Headers.Add("Referer", "https://www.vrt.be/vrtnu/");
+            webClient.UploadString(url, JsonConvert.SerializeObject(new VrtLoginPayload
+            {
+                uid = gigyaResponse.UID,
+                uidsig = gigyaResponse.UIDSignature,
+                ts = gigyaResponse.signatureTimestamp,
+                email = gigyaResponse.profile.email
+            }));
+            var xVrtToken = webClient.ResponseHeaders["set-cookie"].Split(';')[0].Replace("X-VRT-Token=", "");
+            _logger.LogTrace("New X-VRT-TOKEN: " + xVrtToken);
+            return xVrtToken;
         }
 
         private VrtPlayerTokenSet RefreshPlayerToken()
         {
             _logger.LogDebug("Refreshing player token");
-            _logger.LogTrace("VrtToken: " + VrtToken);
             var url = "https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/tokens";
             var webClient = new WebClient();
             webClient.Headers.Add("cookie", $"X-VRT-Token={VrtToken};");

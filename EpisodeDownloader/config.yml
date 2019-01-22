@@ -8,7 +8,8 @@ Logging:
     LogLevel:
         Default: Information
 VrtDownloader:
-    VrtLoginRt:
+    Email:
+    Password:
 VierDownloader:
     LastAuthUser:
     RefreshToken:
