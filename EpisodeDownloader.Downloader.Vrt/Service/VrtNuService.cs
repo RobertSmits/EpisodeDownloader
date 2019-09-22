@@ -59,39 +59,11 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
             return JsonConvert.DeserializeObject<VrtContent>(contentJson);
         }
 
-        public VrtPbsPub GetPublishInfo(string publicationId, string videoId)
-        {
-            var pbsPubURL = $"https://mediazone.vrt.be/api/v1/vrtvideo/assets/{publicationId}${videoId}";
-            var pbsPubJson = new WebClient().DownloadString(pbsPubURL);
-            return JsonConvert.DeserializeObject<VrtPbsPub>(pbsPubJson);
-        }
-
-        public VrtContent GetEpisodeInfoV2(Uri episodeUrl)
-        {
-            var epInfo = new VrtContent();
-            try
-            {
-                epInfo = GetEpisodeInfo(episodeUrl);
-            }
-            catch
-            {
-                _logger.LogError("Old episode info failed");
-            }
-            finally
-            {
-                HtmlDocument html = new HtmlWeb().Load(episodeUrl);
-                var div = html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']");
-                epInfo.publicationId = div.GetAttributeValue("data-publicationid", "");
-                epInfo.videoId = div.GetAttributeValue("data-videoid", "");
-            }
-            return epInfo;
-        }
-
-        public VrtPbsPubv2 GetPublishInfoV2(string publicationId, string videoId)
+        public VrtPbsPubV2 GetPublishInfo(string publicationId, string videoId)
         {
             var pbsPubURL = $"https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/videos/{publicationId}${videoId}?vrtPlayerToken={_vrtTokenService.PlayerToken}&client=vrtvideo";
             var pbsPubJson = new WebClient().DownloadString(pbsPubURL);
-            return JsonConvert.DeserializeObject<VrtPbsPubv2>(pbsPubJson);
+            return JsonConvert.DeserializeObject<VrtPbsPubV2>(pbsPubJson);
         }
     }
 }

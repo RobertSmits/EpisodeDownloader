@@ -65,11 +65,11 @@ namespace EpisodeDownloader.Downloader.Vrt
 
         private int DownloadEpisode(Uri episodeUrl)
         {
-            var episodeInfo = _vrtNuService.GetEpisodeInfoV2(episodeUrl);
-            var pubInfo = default(VrtPbsPubv2);
+            var episodeInfo = _vrtNuService.GetEpisodeInfo(episodeUrl);
+            var pubInfo = default(VrtPbsPubV2);
             try
             {
-                pubInfo = _vrtNuService.GetPublishInfoV2(episodeInfo.publicationId, episodeInfo.videoId);
+                pubInfo = _vrtNuService.GetPublishInfo(episodeInfo.publicationId, episodeInfo.videoId);
             }
             catch (Exception e)
             {

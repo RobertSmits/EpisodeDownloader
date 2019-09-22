@@ -1,6 +1,6 @@
 ﻿namespace EpisodeDownloader.Downloader.Vrt.Models.Api
 {
-    public class VrtPbsPubv2
+    public class VrtPbsPubV2
     {
         public int duration { get; set; }
         public string skinType { get; set; }
