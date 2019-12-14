@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace EpisodeDownloader.Downloader.Vrt
 {
     public class VrtConfiguration

@@ -1,8 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using EpisodeDownloader.Core.Models;
 using EpisodeDownloader.Core.Service.Ffmpeg;
 using EpisodeDownloader.Core.Service.File;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace EpisodeDownloader.Core.Extensions
 {

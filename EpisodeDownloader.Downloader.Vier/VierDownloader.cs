@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 using EpisodeDownloader.Core.Downloader;
 using EpisodeDownloader.Core.Extensions;
 using EpisodeDownloader.Core.Service.History;
 using EpisodeDownloader.Downloader.Vier.Service;
+using Microsoft.Extensions.Logging;
 
 namespace EpisodeDownloader.Downloader.Vier
 {

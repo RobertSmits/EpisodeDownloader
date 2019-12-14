@@ -22,7 +22,7 @@ namespace EpisodeDownloader
             Context.Container = container.Value;
         }
 
-        private static Lazy<LoggingConfiguration> NLogConfiguration = new Lazy<LoggingConfiguration>(() =>
+        private static readonly Lazy<LoggingConfiguration> NLogConfiguration = new Lazy<LoggingConfiguration>(() =>
         {
             var config = new LoggingConfiguration();
             var consoleTarget = new ColoredConsoleTarget("console")
@@ -34,7 +34,7 @@ namespace EpisodeDownloader
             return config;
         });
 
-        private static Lazy<IConfigurationRoot> configuration = new Lazy<IConfigurationRoot>(() =>
+        private static readonly Lazy<IConfigurationRoot> configuration = new Lazy<IConfigurationRoot>(() =>
         {
             string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             if (string.IsNullOrWhiteSpace(env))
@@ -48,7 +48,7 @@ namespace EpisodeDownloader
             return builder.Build();
         });
 
-        private static Lazy<ServiceProvider> container = new Lazy<ServiceProvider>(() =>
+        private static readonly Lazy<ServiceProvider> container = new Lazy<ServiceProvider>(() =>
         {
             var serviceCollection = new ServiceCollection();
             var config = LoadAllDiConfigs();

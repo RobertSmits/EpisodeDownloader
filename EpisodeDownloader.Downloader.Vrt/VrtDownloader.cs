@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 using EpisodeDownloader.Core.Downloader;
 using EpisodeDownloader.Core.Extensions;
 using EpisodeDownloader.Core.Models;
 using EpisodeDownloader.Core.Service.History;
 using EpisodeDownloader.Downloader.Vrt.Models.Api;
 using EpisodeDownloader.Downloader.Vrt.Service;
+using Microsoft.Extensions.Logging;
 
 namespace EpisodeDownloader.Downloader.Vrt
 {

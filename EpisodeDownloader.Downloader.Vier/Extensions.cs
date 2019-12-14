@@ -1,4 +1,5 @@
-namespace EpisodeDownloader.Downloader.Vier {
+namespace EpisodeDownloader.Downloader.Vier
+{
     internal static class Extensions
     {
         public static bool ContainsAny(this string haystack, params string[] needles)

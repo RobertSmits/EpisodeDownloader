@@ -4,7 +4,7 @@ namespace EpisodeDownloader.Core.DependencyInjection
 {
     public abstract class DiConfigDecorator : IDiConfig
     {
-        private IDiConfig _diConfig;
+        private readonly IDiConfig _diConfig;
 
         public virtual void RegisterTypes(IServiceCollection serviceCollection)
         {

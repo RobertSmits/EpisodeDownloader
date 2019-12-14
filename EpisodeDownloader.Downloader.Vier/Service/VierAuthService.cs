@@ -1,14 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System;
-using System.Net;
-using Amazon.CognitoIdentityProvider;
-using Amazon.Extensions.CognitoAuthentication;
+﻿using System;
 using System.Threading.Tasks;
-using Amazon.CognitoIdentityProvider.Model;
 using Amazon;
+using Amazon.CognitoIdentityProvider;
+using Amazon.CognitoIdentityProvider.Model;
+using Amazon.Extensions.CognitoAuthentication;
 using Amazon.Runtime;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EpisodeDownloader.Downloader.Vier.Service
 {

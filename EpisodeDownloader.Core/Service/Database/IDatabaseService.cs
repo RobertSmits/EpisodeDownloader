@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using EpisodeDownloader.Core.Models.Sqlite;
+﻿using EpisodeDownloader.Core.Models.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace EpisodeDownloader.Core.Service.DataBase
 {

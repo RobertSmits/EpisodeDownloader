@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace EpisodeDownloader.Core.Service.File
 {
@@ -32,23 +33,31 @@ namespace EpisodeDownloader.Core.Service.File
 
         public string ReadFile(string path)
         {
-            using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var reader = new StreamReader(fileStream))
-            {
-                return reader.ReadToEnd();
-            }
+            using var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(fileStream);
+            return reader.ReadToEnd();
         }
 
         public void WriteFile(string path, string text)
         {
-            using (var writer = new StreamWriter(path, false))
-            {
-                writer.Write(text);
-            }
+            using var writer = new StreamWriter(path, false);
+            writer.Write(text);
         }
 
         public void MoveFile(string sourceFileName, string destFileName)
         {
+            string extension = Path.GetExtension(destFileName);
+            string pathName = Path.GetDirectoryName(destFileName);
+            string fileNameOnly = Path.Combine(pathName, Path.GetFileNameWithoutExtension(destFileName));
+
+            int i = 0;
+            // If the file exists, keep trying until it doesn't
+            while (System.IO.File.Exists(destFileName))
+            {
+                i += 1;
+                destFileName = string.Format("{0} ({1}){2}", fileNameOnly, i, extension);
+            }
+
             System.IO.File.Move(sourceFileName, destFileName);
         }
 
@@ -61,7 +70,9 @@ namespace EpisodeDownloader.Core.Service.File
 
         public void WriteYamlFile<T>(T data, string fileName)
         {
-            var serialiser = new SerializerBuilder().EmitDefaults().Build();
+            var serialiser = new SerializerBuilder()
+                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                    .Build();
             var fileYaml = serialiser.Serialize(data);
             WriteFile(fileName, fileYaml);
         }

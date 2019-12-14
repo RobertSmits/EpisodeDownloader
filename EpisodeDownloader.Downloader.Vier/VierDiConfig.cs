@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using EpisodeDownloader.Core.Context;
+﻿using EpisodeDownloader.Core.Context;
 using EpisodeDownloader.Core.DependencyInjection;
 using EpisodeDownloader.Core.Downloader;
 using EpisodeDownloader.Downloader.Vier.Service;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EpisodeDownloader.Downloader.Vier
 {

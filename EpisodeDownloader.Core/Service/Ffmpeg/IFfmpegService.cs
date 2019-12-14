@@ -1,5 +1,4 @@
 ﻿using System;
-using EpisodeDownloader.Core.Models;
 
 namespace EpisodeDownloader.Core.Service.Ffmpeg
 {

@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using EpisodeDownloader.Core.Models.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace EpisodeDownloader.Core.Service.DataBase
 {
@@ -12,7 +12,7 @@ namespace EpisodeDownloader.Core.Service.DataBase
         {
             database = new EpisodeDownloaderContext();
             database.Database.Migrate();
-            var count = database.SaveChanges();
+            database.SaveChanges();
         }
 
         public void AddHistory(string itemName, string episodeUrl, string videoUrl)

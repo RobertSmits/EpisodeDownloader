@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using EpisodeDownloader.Core.Models;
 using EpisodeDownloader.Core.Service.File;
+using Microsoft.Extensions.Logging;
 
 namespace EpisodeDownloader.Core.Service.Ffmpeg
 {
     public class FfmpegService : IFfmpegService
     {
         private readonly IFileService _fileService;
+        private readonly ILogger _logger;
 
-        public FfmpegService(IFileService fileService)
+        public FfmpegService(ILogger<FfmpegService> logger, IFileService fileService)
         {
             _fileService = fileService;
+            _logger = logger;
         }
 
         public bool DownloadAndMoveEpisode(Uri streamUrl, string fileName, string downloadPath, string savePath)
@@ -44,6 +46,8 @@ namespace EpisodeDownloader.Core.Service.Ffmpeg
             argumentString += $"-i \"{streamUrl.AbsoluteUri}\" ";
             argumentString += duration > 0 ? $"-to {duration} " : "";
             argumentString += $" -c copy -copyts \"{filePath}\"";
+
+            _logger.LogDebug($"Running ffmpeg: ffmpeg {argumentString}");
 
             p.StartInfo.Arguments = argumentString;
             p.StartInfo.UseShellExecute = false;

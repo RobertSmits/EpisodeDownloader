@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using EpisodeDownloader.Core.DependencyInjection;
+﻿using EpisodeDownloader.Core.DependencyInjection;
 using EpisodeDownloader.Core.Downloader;
 using EpisodeDownloader.Core.Service.DataBase;
 using EpisodeDownloader.Core.Service.Ffmpeg;
 using EpisodeDownloader.Core.Service.File;
 using EpisodeDownloader.Core.Service.History;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EpisodeDownloader.Core
 {

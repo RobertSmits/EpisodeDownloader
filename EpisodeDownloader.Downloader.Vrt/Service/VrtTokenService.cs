@@ -1,12 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Net;
+using EpisodeDownloader.Downloader.Vrt.Extensions;
+using EpisodeDownloader.Downloader.Vrt.Models.Auth;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System;
-using System.Net;
-using EpisodeDownloader.Core.Models;
-using EpisodeDownloader.Core.Service.File;
-using EpisodeDownloader.Downloader.Vrt.Models.Auth;
-using EpisodeDownloader.Downloader.Vrt.Extensions;
 
 namespace EpisodeDownloader.Downloader.Vrt.Service
 {

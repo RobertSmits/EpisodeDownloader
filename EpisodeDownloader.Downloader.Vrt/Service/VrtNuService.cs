@@ -1,10 +1,10 @@
-﻿using HtmlAgilityPack;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Linq;
 using System.Net;
 using EpisodeDownloader.Downloader.Vrt.Models.Api;
+using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace EpisodeDownloader.Downloader.Vrt.Service
 {

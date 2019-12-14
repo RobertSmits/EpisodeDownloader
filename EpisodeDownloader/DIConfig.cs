@@ -1,9 +1,8 @@
-
+using EpisodeDownloader.Core.Context;
+using EpisodeDownloader.Core.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
-using EpisodeDownloader.Core.Context;
-using EpisodeDownloader.Core.DependencyInjection;
 
 namespace EpisodeDownloader
 {

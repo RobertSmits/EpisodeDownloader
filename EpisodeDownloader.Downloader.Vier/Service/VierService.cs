@@ -1,10 +1,10 @@
-﻿using HtmlAgilityPack;
-using System;
+﻿using System;
+using System.Linq;
 using System.Net;
-using Newtonsoft.Json;
 using EpisodeDownloader.Core.Models;
 using EpisodeDownloader.Downloader.Vier.Models.Api;
-using System.Linq;
+using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace EpisodeDownloader.Downloader.Vier.Service
 {

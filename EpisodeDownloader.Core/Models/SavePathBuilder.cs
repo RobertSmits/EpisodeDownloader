@@ -9,7 +9,7 @@ namespace EpisodeDownloader.Core.Models
     {
         private EpisodeInfo _episodeInfo;
         private string _basePath;
-        private IList<string> _pathSections;
+        private readonly IList<string> _pathSections;
         private readonly IFileService _fileService;
 
         public SavePathBuilder(IFileService fileService)
