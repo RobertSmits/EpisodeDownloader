@@ -2,16 +2,22 @@
 {
     public class PlaylistResponse
     {
-        public Length length { get; set; }
-        public Video video { get; set; }
+        public String image { get; set; }
+        public Number length { get; set; }
+        public String description { get; set; }
+        public String publishedOn { get; set; }
+        public String label { get; set; }
+        public String video { get; set; }
+        public String uuid { get; set; }
+        public String url { get; set; }
     }
 
-    public class Length
+    public class Number
     {
-        public int N { get; set; }
+        public string N { get; set; }
     }
 
-    public class Video
+    public class String
     {
         public string S { get; set; }
     }

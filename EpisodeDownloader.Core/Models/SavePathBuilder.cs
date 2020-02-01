@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using EpisodeDownloader.Contracts;
 using EpisodeDownloader.Core.Service.File;
 
 namespace EpisodeDownloader.Core.Models
@@ -32,7 +33,7 @@ namespace EpisodeDownloader.Core.Models
 
         public SavePathBuilder AddShowFolder()
         {
-            var folderName = _fileService.MakeValidFileName(_episodeInfo.ShowName);
+            var folderName = _fileService.MakeValidFolderName(_episodeInfo.ShowName);
             _pathSections.Add(folderName);
             return this;
         }
@@ -42,7 +43,7 @@ namespace EpisodeDownloader.Core.Models
             var season = int.TryParse(_episodeInfo.Season, out int seasonNr)
                 ? $"S{seasonNr:00}"
                 : _episodeInfo.Season;
-            var folderName = _fileService.MakeValidFileName(season);
+            var folderName = _fileService.MakeValidFolderName(season);
 
             _pathSections.Add(folderName);
             return this;

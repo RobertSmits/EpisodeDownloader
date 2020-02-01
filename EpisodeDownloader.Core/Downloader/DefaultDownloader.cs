@@ -1,9 +1,11 @@
 using System;
+using EpisodeDownloader.Contracts.Downloader;
+using EpisodeDownloader.Contracts;
 using Microsoft.Extensions.Logging;
 
 namespace EpisodeDownloader.Core.Downloader
 {
-    public class DefaultDownloader : IDownloader
+    public class DefaultDownloader : IEpisodeProvider
     {
         private readonly ILogger _logger;
 
@@ -12,14 +14,25 @@ namespace EpisodeDownloader.Core.Downloader
             _logger = logger;
         }
 
-        public bool CanHandleUrl(Uri episodeUrl)
+        public bool CanHandleUrl(Uri showUrl)
         {
             return false;
         }
 
-        public void Handle(Uri episodeUrl)
+        public Uri[] GetShowSeasons(Uri showUrl)
         {
-            _logger.LogError($"No handler found for url: {episodeUrl}");
+            _logger.LogError($"No handler found for url: {showUrl}");
+            return new Uri[0];
+        }
+
+        public Uri[] GetShowSeasonEpisodes(Uri seasonUrl)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public EpisodeInfo GetEpisodeInfo(Uri episodeUrl)
+        {
+            throw new InvalidOperationException();
         }
     }
 }

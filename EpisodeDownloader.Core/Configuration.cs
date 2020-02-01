@@ -8,6 +8,7 @@ namespace EpisodeDownloader.Core
         public string SavePath { get; set; }
         public bool SaveShowsInFolders { get; set; }
         public bool SaveSeasonsInFolders { get; set; }
+        public string DownloadExtension { get; set; } = "mp4";
         public IEnumerable<string> WatchUrls { get; set; }
     }
 }

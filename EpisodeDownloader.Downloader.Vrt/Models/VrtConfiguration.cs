@@ -1,4 +1,4 @@
-namespace EpisodeDownloader.Downloader.Vrt
+namespace EpisodeDownloader.Downloader.Vrt.Models
 {
     public class VrtConfiguration
     {

@@ -1,25 +1,25 @@
-﻿using EpisodeDownloader.Core.Context;
-using EpisodeDownloader.Core.DependencyInjection;
-using EpisodeDownloader.Core.Downloader;
+﻿using EpisodeDownloader.Contracts.DependencyInjection;
+using EpisodeDownloader.Contracts.Downloader;
+using EpisodeDownloader.Downloader.Vier.Models;
 using EpisodeDownloader.Downloader.Vier.Service;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EpisodeDownloader.Downloader.Vier
 {
     public class VierDiConfig : DiConfigDecorator
     {
-        public override void RegisterTypes(IServiceCollection serviceCollection)
-        {
-            base.RegisterTypes(serviceCollection);
-            serviceCollection.AddTransient<IDownloader, VierDownloader>();
-            serviceCollection.AddSingleton<IVierService, VierService>();
-            serviceCollection.AddSingleton<IVierAuthService, VierAuthService>();
-            serviceCollection.Configure<VierConfiguration>(Context.Configuration.GetSection(nameof(VierDownloader)));
-        }
-
         public VierDiConfig(IDiConfig diConfig)
             : base(diConfig)
         {
+        }
+
+        public override void RegisterTypes(IServiceCollection services, IConfiguration configuration)
+        {
+            base.RegisterTypes(services, configuration);
+            services.AddTransient<IEpisodeProvider, VierEpisodeProvider>();
+            services.AddSingleton<IVierAuthService, VierAuthService>();
+            services.Configure<VierConfiguration>(configuration.GetSection(nameof(VierEpisodeProvider)));
         }
     }
 }

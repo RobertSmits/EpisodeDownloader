@@ -6,9 +6,5 @@ namespace EpisodeDownloader.Core.Service.History
     {
         void AddDownloaded(string episodeName, Uri episodeUrl, Uri videoUrl);
         bool CheckIfDownloaded(Uri episodeUrl);
-
-#if CHECK_EP_NAME
-        bool CheckIfDownloaded(string episodeName, Uri episodeUrl, Uri videoUrl);
-#endif
     }
 }

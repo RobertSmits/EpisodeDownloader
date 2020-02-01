@@ -1,6 +1,6 @@
 using System;
 
-namespace EpisodeDownloader.Core.Models
+namespace EpisodeDownloader.Contracts
 {
     public class EpisodeInfo
     {
@@ -9,5 +9,8 @@ namespace EpisodeDownloader.Core.Models
         public int Episode { get; set; }
         public string Title { get; set; }
         public Uri StreamUrl { get; set; }
+
+        public TimeSpan Skip { get; set; }
+        public TimeSpan Duration { get; set; }
     }
 }

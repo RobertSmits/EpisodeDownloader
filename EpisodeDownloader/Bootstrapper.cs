@@ -2,27 +2,26 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using EpisodeDownloader.Contracts.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NetEscapades.Configuration.Yaml;
-using EpisodeDownloader.Core.Context;
-using EpisodeDownloader.Core.DependencyInjection;
 using NLog;
-using NLog.Targets;
 using NLog.Config;
+using NLog.Targets;
 
 namespace EpisodeDownloader
 {
     public static class Bootstrapper
     {
-        public static void Bootstrap()
+        public static EpisodeDownloader BuildEpisodeDownloader()
         {
-            LogManager.Configuration = NLogConfiguration.Value;
-            Context.Configuration = configuration.Value;
-            Context.Container = container.Value;
+            LogManager.Configuration = BuildNLogConfiguration();
+            var configuration = BuildConfiguration();
+            var serviceProvider = BuildServiceProvider(configuration);
+            return serviceProvider.GetRequiredService<EpisodeDownloader>();
         }
 
-        private static readonly Lazy<LoggingConfiguration> NLogConfiguration = new Lazy<LoggingConfiguration>(() =>
+        private static LoggingConfiguration BuildNLogConfiguration()
         {
             var config = new LoggingConfiguration();
             var consoleTarget = new ColoredConsoleTarget("console")
@@ -32,9 +31,9 @@ namespace EpisodeDownloader
             config.AddTarget(consoleTarget);
             config.AddRuleForAllLevels(consoleTarget);
             return config;
-        });
+        }
 
-        private static readonly Lazy<IConfigurationRoot> configuration = new Lazy<IConfigurationRoot>(() =>
+        private static IConfigurationRoot BuildConfiguration()
         {
             string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             if (string.IsNullOrWhiteSpace(env))
@@ -46,28 +45,24 @@ namespace EpisodeDownloader
                 .AddYamlFile($"config.{env}.yml", optional: true, reloadOnChange: false);
 
             return builder.Build();
-        });
+        }
 
-        private static readonly Lazy<ServiceProvider> container = new Lazy<ServiceProvider>(() =>
+        private static IServiceProvider BuildServiceProvider(IConfiguration configuration)
         {
-            var serviceCollection = new ServiceCollection();
-            var config = LoadAllDiConfigs();
-            config.RegisterTypes(serviceCollection);
-            return serviceCollection.BuildServiceProvider();
-        });
+            var services = new ServiceCollection();
+            LoadAllDiConfigs().RegisterTypes(services, configuration);
+            return services.BuildServiceProvider();
+        }
 
         private static IDiConfig LoadAllDiConfigs()
         {
             var decoratorTypes = Directory.GetFiles("./", "EpisodeDownloader.*.dll")
-                                        .Select(Assembly.LoadFrom)
-                                        .SelectMany(a => a.GetTypes())
-                                        .Where(t => !t.IsInterface && !t.IsAbstract)
-                                        .Where(t => t.IsSubclassOf(typeof(DiConfigDecorator)))
-                                        .ToList();
+                                   .Select(Assembly.LoadFrom)
+                                   .SelectMany(a => a.GetTypes())
+                                   .Where(t => !t.IsInterface && !t.IsAbstract && t.IsSubclassOf(typeof(DiConfigDecorator)));
 
             IDiConfig config = new DIConfig();
-            config = decoratorTypes.Aggregate(config, (c, t) => (DiConfigDecorator)Activator.CreateInstance(t, new object[] { c }));
-            return config;
+            return decoratorTypes.Aggregate(config, (c, t) => (DiConfigDecorator)Activator.CreateInstance(t, new[] { c }));
         }
     }
 }

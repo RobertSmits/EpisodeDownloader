@@ -5,6 +5,7 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Amazon.Extensions.CognitoAuthentication;
 using Amazon.Runtime;
+using EpisodeDownloader.Downloader.Vier.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -59,8 +60,8 @@ namespace EpisodeDownloader.Downloader.Vier.Service
             _logger.LogDebug("Login attampt");
             _logger.LogTrace("Username: " + username);
             _logger.LogTrace("Password: " + password);
-            CognitoUser user = new CognitoUser(username, CLIENT_ID, _userPool, _provider);
-            AuthFlowResponse context = await user.StartWithSrpAuthAsync(new InitiateSrpAuthRequest
+            var user = new CognitoUser(username, CLIENT_ID, _userPool, _provider);
+            var context = await user.StartWithSrpAuthAsync(new InitiateSrpAuthRequest
             {
                 Password = password
             }).ConfigureAwait(false);
@@ -71,9 +72,9 @@ namespace EpisodeDownloader.Downloader.Vier.Service
         {
             _logger.LogDebug("Refreshing login token");
             _logger.LogTrace("RefreshToken: " + refreshToken);
-            CognitoUser user = new CognitoUser(null, CLIENT_ID, _userPool, _provider);
+            var user = new CognitoUser(null, CLIENT_ID, _userPool, _provider);
             user.SessionTokens = new CognitoUserSession(null, null, refreshToken, DateTime.Now, DateTime.Now.AddDays(3));
-            AuthFlowResponse context = await user.StartWithRefreshTokenAuthAsync(new InitiateRefreshTokenAuthRequest
+            var context = await user.StartWithRefreshTokenAuthAsync(new InitiateRefreshTokenAuthRequest
             {
                 AuthFlowType = AuthFlowType.REFRESH_TOKEN_AUTH
             }).ConfigureAwait(false);

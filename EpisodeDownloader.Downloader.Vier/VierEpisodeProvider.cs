@@ -1,20 +1,34 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
-using EpisodeDownloader.Core.Models;
+using System.Text.Json;
+using EpisodeDownloader.Contracts;
+using EpisodeDownloader.Contracts.Downloader;
 using EpisodeDownloader.Downloader.Vier.Models.Api;
+using EpisodeDownloader.Downloader.Vier.Service;
 using HtmlAgilityPack;
-using Newtonsoft.Json;
 
-namespace EpisodeDownloader.Downloader.Vier.Service
+namespace EpisodeDownloader.Downloader.Vier
 {
-    public class VierService : IVierService
+    public class VierEpisodeProvider : IEpisodeProvider
     {
         private readonly IVierAuthService _vierAuthService;
 
-        public VierService(IVierAuthService vierAuthService)
+        public VierEpisodeProvider(IVierAuthService vierAuthService)
         {
             _vierAuthService = vierAuthService;
+        }
+
+        public bool CanHandleUrl(Uri showUrl)
+        {
+            return showUrl.AbsoluteUri.Contains("vier.be")
+                || showUrl.AbsoluteUri.Contains("vijf.be")
+                || showUrl.AbsoluteUri.Contains("zestv.be");
+        }
+
+        public Uri[] GetShowSeasons(Uri showUrl)
+        {
+            return new Uri[] { showUrl };
         }
 
         public Uri[] GetShowSeasonEpisodes(Uri seasonUrl)
@@ -24,7 +38,7 @@ namespace EpisodeDownloader.Downloader.Vier.Service
                 .FirstOrDefault()
                 ?.SelectNodes(".//a");
             if (playListItems == null)
-                return new Uri[]{};
+                return new Uri[] { };
 
             return playListItems
                 .Where(x =>
@@ -38,10 +52,11 @@ namespace EpisodeDownloader.Downloader.Vier.Service
 
         public EpisodeInfo GetEpisodeInfo(Uri episodeUrl)
         {
+
             var html = new HtmlWeb().Load(episodeUrl);
             var title = html.DocumentNode.SelectNodes("//*[contains(@class,'metadata__title')]").FirstOrDefault().InnerText;
             var titleParts = title.Split(" - ");
-            var episodeId = GetEpisodeId(html);
+            var episodeId = html.DocumentNode.SelectNodes("//*[contains(@class,'video-container')]").FirstOrDefault().GetAttributeValue("id", ""); ; ;
 
             return titleParts.Count() == 2
                 ? new EpisodeInfo
@@ -62,25 +77,13 @@ namespace EpisodeDownloader.Downloader.Vier.Service
                 };
         }
 
-        public string GetEpisodeId(Uri episodeUrl)
-        {
-            var html = new HtmlWeb().Load(episodeUrl);
-            return GetEpisodeId(html);
-        }
-
-        private string GetEpisodeId(HtmlDocument html)
-        {
-            var videoDiv = html.DocumentNode.SelectNodes("//*[contains(@class,'video-container')]").FirstOrDefault();
-            return videoDiv.GetAttributeValue("id", "");
-        }
-
-        public Uri GetStreamUrl(string episodeId)
+        private Uri GetStreamUrl(string episodeId)
         {
             var url = $"https://api.viervijfzes.be/content/{episodeId}";
             var webClient = new WebClient();
             webClient.Headers.Add("Authorization", _vierAuthService.IdToken);
             var resultJson = webClient.DownloadString(url);
-            return new Uri(JsonConvert.DeserializeObject<PlaylistResponse>(resultJson).video.S);
+            return new Uri(JsonSerializer.Deserialize<PlaylistResponse>(resultJson).video.S);
         }
     }
 }

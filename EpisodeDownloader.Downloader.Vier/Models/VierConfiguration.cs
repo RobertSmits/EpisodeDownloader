@@ -1,4 +1,4 @@
-namespace EpisodeDownloader.Downloader.Vier
+namespace EpisodeDownloader.Downloader.Vier.Models
 {
     public class VierConfiguration
     {

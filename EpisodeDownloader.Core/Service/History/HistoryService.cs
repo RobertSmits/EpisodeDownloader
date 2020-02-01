@@ -1,40 +1,30 @@
 ﻿using System;
 using System.Linq;
-using EpisodeDownloader.Core.Service.DataBase;
+using EpisodeDownloader.Core.Models.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace EpisodeDownloader.Core.Service.History
 {
     public class HistoryService : IHistoryService
     {
-        private readonly IDatabaseService _databaseService;
+        private readonly EpisodeDownloaderContext database;
 
-        public HistoryService(IDatabaseService databaseService)
+        public HistoryService()
         {
-            _databaseService = databaseService;
+            database = new EpisodeDownloaderContext();
+            database.Database.Migrate();
+            database.SaveChanges();
         }
 
         public void AddDownloaded(string episodeName, Uri episodeUrl, Uri videoUrl)
         {
-            _databaseService.AddHistory(episodeName, episodeUrl.AbsoluteUri, videoUrl.AbsoluteUri);
+            database.Set<Downloaded>().Add(new Downloaded { Name = episodeName, EpisodeUrl = episodeUrl.AbsoluteUri, VideoUrl = videoUrl.AbsoluteUri, DownloadDate = DateTime.Now });
+            database.SaveChanges();
         }
 
         public bool CheckIfDownloaded(Uri episodeUrl)
         {
-            return _databaseService.GetHistory().FirstOrDefault(x => x.EpisodeUrl == episodeUrl.AbsoluteUri) != null;
+            return database.Set<Downloaded>().FirstOrDefault(x => x.EpisodeUrl == episodeUrl.AbsoluteUri) != null;
         }
-
-#if CHECK_EP_NAME
-        public bool CheckIfDownloaded(string episodeName, Uri episodeUrl, Uri videoUrl)
-        {
-            //return _databaseService.GetHistory().FirstOrDefault(x => x.Name == episodeName) != null;
-            var downoadedItem = _databaseService.GetHistory().FirstOrDefault(x => x.Name == episodeName);
-            if (downoadedItem == null) return false;
-            if (downoadedItem.EpisodeUrl != null) return true;
-            downoadedItem.EpisodeUrl = episodeUrl.AbsoluteUri;
-            downoadedItem.VideoUrl = videoUrl.AbsoluteUri;
-            _databaseService.SaveChanges();
-            return true;
-        }
-#endif
     }
 }

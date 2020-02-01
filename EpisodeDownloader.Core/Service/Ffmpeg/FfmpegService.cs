@@ -1,50 +1,32 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using EpisodeDownloader.Core.Service.File;
+using EpisodeDownloader.Contracts.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace EpisodeDownloader.Core.Service.Ffmpeg
 {
     public class FfmpegService : IFfmpegService
     {
-        private readonly IFileService _fileService;
         private readonly ILogger _logger;
 
-        public FfmpegService(ILogger<FfmpegService> logger, IFileService fileService)
+        public FfmpegService(ILogger<FfmpegService> logger)
         {
-            _fileService = fileService;
             _logger = logger;
         }
 
-        public bool DownloadAndMoveEpisode(Uri streamUrl, string fileName, string downloadPath, string savePath)
+        public void DownloadEpisode(Uri streamUrl, string filePath)
         {
-            return DownloadAndMoveEpisode(streamUrl, fileName, downloadPath, savePath, 0, 0);
+            DownloadEpisode(streamUrl, filePath, TimeSpan.Zero, TimeSpan.Zero);
         }
 
-        public bool DownloadAndMoveEpisode(Uri streamUrl, string fileName, string downloadPath, string savePath, int skip, int duration)
+        public void DownloadEpisode(Uri streamUrl, string filePath, TimeSpan skip, TimeSpan duration)
         {
-            var downloadFilePath = Path.Combine(downloadPath, fileName);
-            var result = DownloadEpisode(streamUrl, downloadFilePath, skip, duration);
-            if (result == false) return false;
-
-            savePath = Path.Combine(savePath, fileName);
-            _fileService.MoveFile(downloadFilePath, savePath);
-            return true;
-        }
-
-        public bool DownloadEpisode(Uri streamUrl, string filePath)
-        {
-            return DownloadEpisode(streamUrl, filePath, 0, 0);
-        }
-
-        public bool DownloadEpisode(Uri streamUrl, string filePath, int skip, int duration)
-        {
-            Process p = new Process();
+            var p = new Process();
             p.StartInfo.FileName = "ffmpeg";
-            var argumentString = skip > 0 ? $"-ss {skip} " : "";
+            var argumentString = "-y -hide_banner -loglevel panic ";
             argumentString += $"-i \"{streamUrl.AbsoluteUri}\" ";
-            argumentString += duration > 0 ? $"-to {duration} " : "";
+            argumentString += skip.TotalSeconds > 0 ? $"-ss {skip.TotalSeconds} " : "";
+            argumentString += duration.TotalSeconds > 0 ? $"-to {duration.TotalSeconds} " : "";
             argumentString += $" -c copy -copyts \"{filePath}\"";
 
             _logger.LogDebug($"Running ffmpeg: ffmpeg {argumentString}");
@@ -52,18 +34,13 @@ namespace EpisodeDownloader.Core.Service.Ffmpeg
             p.StartInfo.Arguments = argumentString;
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardError = true;
-            if (!p.Start()) return false;
-            string line;
-            while ((line = p.StandardError.ReadLine()) != null)
-            {
-                if (line.Contains("Duration: "))
-                {
-                    var time = line.Split(",")[0].Replace("  Duration: ", "");
-                    Console.WriteLine("Lengte aflevering: " + time);
-                }
-            }
+            if (!p.Start())
+                throw new DownloadException("Error running ffmpeg");
+
             p.WaitForExit();
-            return p.ExitCode == 0;
+
+            if (p.ExitCode != 0)
+                throw new DownloadException("Error running ffmpeg");
         }
     }
 }

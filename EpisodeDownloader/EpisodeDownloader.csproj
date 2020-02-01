@@ -11,22 +11,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.17" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.0">
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.18" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SQLite" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.0" />
-    <PackageReference Include="NetEscapades.Configuration.Yaml" Version="1.6.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SQLite" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.1" />
+    <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.0.0" />
     <PackageReference Include="nlog" Version="4.6.8" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.6.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../EpisodeDownloader.Core/EpisodeDownloader.Core.csproj" />
+    <ProjectReference Include="../EpisodeDownloader.Contracts/EpisodeDownloader.Contracts.csproj" />
     <ProjectReference Include="../EpisodeDownloader.Downloader.Vrt/EpisodeDownloader.Downloader.Vrt.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <OutputItemType>Content</OutputItemType>
@@ -42,7 +43,7 @@
   </ItemGroup>
 
   <Target Name="CopyPDBfile" AfterTargets="Build">
-    <!-- Copy dependencies from refernced projects. -->
+    <!--Copy dependencies from refernced projects.-->
     <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.Core.dll" DestinationFolder="$(TargetDir)" />
     <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.SecurityToken.dll" DestinationFolder="$(TargetDir)" />
     <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.CognitoIdentity.dll" DestinationFolder="$(TargetDir)" />

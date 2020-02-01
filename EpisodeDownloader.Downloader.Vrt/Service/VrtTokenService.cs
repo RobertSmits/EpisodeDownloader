@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Net;
+using System.Text.Json;
 using EpisodeDownloader.Downloader.Vrt.Extensions;
+using EpisodeDownloader.Downloader.Vrt.Models;
 using EpisodeDownloader.Downloader.Vrt.Models.Auth;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace EpisodeDownloader.Downloader.Vrt.Service
 {
@@ -57,7 +58,7 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
                 .AddParameter("authMode", "cookie");
             var webClient = new WebClient();
             var contentJson = webClient.DownloadString(url);
-            return JsonConvert.DeserializeObject<GigyaAuthResponse>(contentJson);
+            return JsonSerializer.Deserialize<GigyaAuthResponse>(contentJson);
         }
 
         private string GetVrtToken(string username, string password)
@@ -68,7 +69,7 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/json");
             webClient.Headers.Add("Referer", "https://www.vrt.be/vrtnu/");
-            webClient.UploadString(url, JsonConvert.SerializeObject(new VrtLoginPayload
+            webClient.UploadString(url, JsonSerializer.Serialize(new VrtLoginPayload
             {
                 uid = gigyaResponse.UID,
                 uidsig = gigyaResponse.UIDSignature,
@@ -87,7 +88,7 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
             var webClient = new WebClient();
             webClient.Headers.Add("cookie", $"X-VRT-Token={VrtToken};");
             var contentJson = webClient.UploadString(url, "");
-            var tokenSet = JsonConvert.DeserializeObject<VrtPlayerTokenSet>(contentJson);
+            var tokenSet = JsonSerializer.Deserialize<VrtPlayerTokenSet>(contentJson);
             _logger.LogTrace("New PlayerToken: " + tokenSet.vrtPlayerToken);
             return tokenSet;
         }

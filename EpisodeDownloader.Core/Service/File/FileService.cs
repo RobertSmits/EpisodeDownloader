@@ -1,7 +1,5 @@
 ﻿using System.IO;
 using System.Text.RegularExpressions;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace EpisodeDownloader.Core.Service.File
 {
@@ -59,22 +57,6 @@ namespace EpisodeDownloader.Core.Service.File
             }
 
             System.IO.File.Move(sourceFileName, destFileName);
-        }
-
-
-        public T ReadYamlFile<T>(string fileName)
-        {
-            var fileYaml = ReadFile(fileName);
-            return new Deserializer().Deserialize<T>(fileYaml);
-        }
-
-        public void WriteYamlFile<T>(T data, string fileName)
-        {
-            var serialiser = new SerializerBuilder()
-                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                    .Build();
-            var fileYaml = serialiser.Serialize(data);
-            WriteFile(fileName, fileYaml);
         }
     }
 }
