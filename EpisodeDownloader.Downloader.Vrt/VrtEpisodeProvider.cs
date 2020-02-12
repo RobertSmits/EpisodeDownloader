@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using EpisodeDownloader.Contracts;
 using EpisodeDownloader.Contracts.Downloader;
 using EpisodeDownloader.Contracts.Exceptions;
@@ -26,9 +28,9 @@ namespace EpisodeDownloader.Downloader.Vrt
             return showUrl.AbsoluteUri.Contains("vrt.be");
         }
 
-        public Uri[] GetShowSeasons(Uri showUrl)
+        public async Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
         {
-            var html = new HtmlWeb().Load(showUrl);
+            var html = await new HtmlWeb().LoadFromWebAsync(showUrl, null, null, cancellationToken);
             var seasonSelectOptions = html.DocumentNode.SelectNodes("//*[@class=\"vrt-labelnav\"]")
                 ?.FirstOrDefault()
                 ?.SelectNodes(".//li//a");
@@ -42,9 +44,9 @@ namespace EpisodeDownloader.Downloader.Vrt
                 .ToArray();
         }
 
-        public Uri[] GetShowSeasonEpisodes(Uri seasonUrl)
+        public async Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
         {
-            var html = new HtmlWeb().Load(seasonUrl);
+            var html = await new HtmlWeb().LoadFromWebAsync(seasonUrl, null, null, cancellationToken);
             var seasonEpisodes = html.DocumentNode.SelectSingleNode("//nui-list[@id='episodelist-list']//nui-list--content")
                 ?.SelectNodes(".//li//nui-tile")
                 ?.Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
@@ -53,18 +55,18 @@ namespace EpisodeDownloader.Downloader.Vrt
             return seasonEpisodes ?? (html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']") != null ? new Uri[] { seasonUrl } : new Uri[0]);
         }
 
-        public EpisodeInfo GetEpisodeInfo(Uri episodeUrl)
+        public async Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default)
         {
             var episodeURL = episodeUrl.AbsoluteUri;
             var contentJsonUrl = episodeURL.Remove(episodeURL.Length - 1) + ".content.json";
-            var contentJson = new WebClient().DownloadString(contentJsonUrl);
+            var contentJson = await new WebClient().DownloadStringTaskAsync(contentJsonUrl);
             var episodeInfo = JsonSerializer.Deserialize<VrtContent>(contentJson);
 
             var pbsPubURL = new Uri($"https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/videos/{episodeInfo.publicationId}${episodeInfo.videoId}")
-                .AddParameter("vrtPlayerToken", _vrtTokenService.PlayerToken)
+                .AddParameter("vrtPlayerToken", await _vrtTokenService.GetPlayerTokenAsync())
                 .AddParameter("client", "vrtvideo");
 
-            var pbsPubJson = new WebClient().DownloadString(pbsPubURL);
+            var pbsPubJson = await new WebClient().DownloadStringTaskAsync(pbsPubURL);
             var pubInfo = JsonSerializer.Deserialize<VrtPbsPubV2>(pbsPubJson);
 
             var episodeDownloadUrl = pubInfo.targetUrls.Where(x => x.type.ToLower() == "hls").Select(x => new Uri(x.url)).FirstOrDefault();

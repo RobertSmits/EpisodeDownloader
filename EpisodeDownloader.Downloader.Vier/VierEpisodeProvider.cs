@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
-using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Web;
 using EpisodeDownloader.Contracts;
 using EpisodeDownloader.Contracts.Downloader;
 using EpisodeDownloader.Downloader.Vier.Models.Api;
 using EpisodeDownloader.Downloader.Vier.Service;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace EpisodeDownloader.Downloader.Vier
 {
@@ -26,37 +29,38 @@ namespace EpisodeDownloader.Downloader.Vier
                 || showUrl.AbsoluteUri.Contains("zestv.be");
         }
 
-        public Uri[] GetShowSeasons(Uri showUrl)
+        public Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
         {
-            return new Uri[] { showUrl };
+            return Task.FromResult(new Uri[] { showUrl });
         }
 
-        public Uri[] GetShowSeasonEpisodes(Uri seasonUrl)
+        public async Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
         {
-            var html = new HtmlWeb().Load(seasonUrl);
-            var playListItems = html.DocumentNode.SelectNodes("//*[@class=\"playlist__items\"]")
-                .FirstOrDefault()
-                ?.SelectNodes(".//a");
-            if (playListItems == null)
-                return new Uri[] { };
+            var html = await new HtmlWeb().LoadFromWebAsync(seasonUrl, null, null, cancellationToken);
+            var heroData = html.DocumentNode.SelectSingleNode("//*[@data-hero]")?.GetAttributeValue("data-hero", "{}");
+            if (heroData == null) return new Uri[0];
+            var hero = JsonConvert.DeserializeObject<DataHero>(HttpUtility.HtmlDecode(heroData));
 
-            return playListItems
-                .Where(x =>
-                    x.SelectNodes(".//*[@class=\"video-teaser__title\"]//span")
-                        ?.FirstOrDefault()
-                        .InnerText
-                        .ContainsAny(" - S", " - Aflevering") == true
-                ).Select(x => new Uri(seasonUrl.Scheme + "://" + seasonUrl.Host + x.GetAttributeValue("href", "")))
-                .ToArray();
+            return hero.Data.Playlists.SelectMany(x => x.Episodes.Select(x =>
+                new Uri(seasonUrl.Scheme + "://" + seasonUrl.Host + x.Link))).ToArray();
         }
 
-        public EpisodeInfo GetEpisodeInfo(Uri episodeUrl)
+        public async Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default)
         {
+            var posibleDataTags = new[] { "data-hero", "data-program-seasons" };
+            var html = await new HtmlWeb().LoadFromWebAsync(episodeUrl, null, null, cancellationToken);
+            string heroData = default;
+            foreach(var current in posibleDataTags)
+            {
+                var node = html.DocumentNode.SelectSingleNode($"//*[@{current}]");
+                if (node is null) continue;
+                heroData = node.GetAttributeValue("current", null);
+                if (heroData != null) break;
+            }
 
-            var html = new HtmlWeb().Load(episodeUrl);
-            var title = html.DocumentNode.SelectNodes("//*[contains(@class,'metadata__title')]").FirstOrDefault().InnerText;
-            var titleParts = title.Split(" - ");
-            var episodeId = html.DocumentNode.SelectNodes("//*[contains(@class,'video-container')]").FirstOrDefault().GetAttributeValue("id", ""); ; ;
+            var hero = JsonConvert.DeserializeObject<DataHero>(HttpUtility.HtmlDecode(heroData ?? "{}"));
+            var episode = hero.Data.Playlists.SelectMany(x => x.Episodes).First(x => x.Link == episodeUrl.AbsolutePath.TrimEnd('/'));
+            var titleParts = episode.Title.Split(" - ");
 
             return titleParts.Count() == 2
                 ? new EpisodeInfo
@@ -65,7 +69,7 @@ namespace EpisodeDownloader.Downloader.Vier
                     Season = "1",
                     Episode = int.Parse(titleParts[1].Replace("Aflevering ", "")),
                     Title = "",
-                    StreamUrl = GetStreamUrl(episodeId),
+                    StreamUrl = await GetStreamUrlAsync(episode.VideoUuid),
                 }
                 : new EpisodeInfo
                 {
@@ -73,17 +77,17 @@ namespace EpisodeDownloader.Downloader.Vier
                     Season = titleParts[1].Replace("S", ""),
                     Episode = int.Parse(titleParts[2].Replace("Aflevering ", "")),
                     Title = "",
-                    StreamUrl = GetStreamUrl(episodeId),
+                    StreamUrl = await GetStreamUrlAsync(episode.VideoUuid),
                 };
         }
 
-        private Uri GetStreamUrl(string episodeId)
+        private async Task<Uri> GetStreamUrlAsync(string episodeId)
         {
             var url = $"https://api.viervijfzes.be/content/{episodeId}";
             var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", _vierAuthService.IdToken);
-            var resultJson = webClient.DownloadString(url);
-            return new Uri(JsonSerializer.Deserialize<PlaylistResponse>(resultJson).video.S);
+            webClient.Headers.Add("Authorization", await _vierAuthService.GetIdTokenAsync());
+            var resultJson = await webClient.DownloadStringTaskAsync(url);
+            return new Uri(JsonConvert.DeserializeObject<PlaylistResponse>(resultJson).Video.S);
         }
     }
 }

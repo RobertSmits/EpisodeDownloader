@@ -1,8 +1,10 @@
-﻿namespace EpisodeDownloader.Downloader.Vrt.Service
+﻿using System.Threading.Tasks;
+
+namespace EpisodeDownloader.Downloader.Vrt.Service
 {
     public interface IVrtTokenService
     {
-        string VrtToken { get; }
-        string PlayerToken { get; }
+        Task<string> GetVrtTokenAsync();
+        Task<string> GetPlayerTokenAsync();
     }
 }

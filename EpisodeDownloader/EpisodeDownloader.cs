@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using EpisodeDownloader.Contracts.Downloader;
 using EpisodeDownloader.Core;
 using EpisodeDownloader.Core.Downloader;
@@ -44,21 +46,21 @@ namespace EpisodeDownloader
             _defaultDownloader = defaultDownloader;
         }
 
-        public void Run()
+        public async Task Run(CancellationToken cancellationToken = default)
         {
             foreach (var showUrl in _configuration.WatchUrls.Select(x => new Uri(x)))
             {
                 var handler = _episodeProviders.FirstOrDefault(x => x.CanHandleUrl(showUrl))
                     ?? _defaultDownloader;
 
-                DownloadShow(showUrl, handler);
+                await DownloadShow(showUrl, handler, cancellationToken);
             }
         }
 
-        public void DownloadShow(Uri showUrl, IEpisodeProvider episodeProvider)
+        public async Task DownloadShow(Uri showUrl, IEpisodeProvider episodeProvider, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Current show: " + showUrl);
-            var seasons = episodeProvider.GetShowSeasons(showUrl);
+            var seasons = await episodeProvider.GetShowSeasonsAsync(showUrl, cancellationToken);
             if (seasons == null)
             {
                 _logger.LogInformation("No Seasons Available");
@@ -67,14 +69,14 @@ namespace EpisodeDownloader
 
             foreach (var season in seasons)
             {
-                DownloadSeason(season, episodeProvider);
+                await DownloadSeason(season, episodeProvider);
             }
         }
 
-        public void DownloadSeason(Uri seasonUrl, IEpisodeProvider episodeProvider)
+        public async Task DownloadSeason(Uri seasonUrl, IEpisodeProvider episodeProvider, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Current season: " + seasonUrl);
-            var episodes = episodeProvider.GetShowSeasonEpisodes(seasonUrl);
+            var episodes = await episodeProvider.GetShowSeasonEpisodesAsync(seasonUrl, cancellationToken);
             if (episodes.Length == 0)
             {
                 _logger.LogInformation("No Episodes Available");
@@ -83,7 +85,7 @@ namespace EpisodeDownloader
             foreach (var episode in episodes)
             {
                 _logger.LogInformation("Current episode: " + episode);
-                var downloaded = _historyService.CheckIfDownloaded(episode);
+                var downloaded = await _historyService.CheckIfDownloadedAsync(episode);
                 if (downloaded)
                 {
                     _logger.LogInformation("Already downloaded. Skipped");
@@ -91,7 +93,7 @@ namespace EpisodeDownloader
                 }
                 try
                 {
-                    DownloadEpisode(episode, episodeProvider);
+                    await DownloadEpisode(episode, episodeProvider, cancellationToken);
                     _logger.LogInformation("Downnload Finished");
                 }
                 catch (Exception ex)
@@ -101,9 +103,9 @@ namespace EpisodeDownloader
             }
         }
 
-        private int DownloadEpisode(Uri episodeUrl, IEpisodeProvider episodeProvider)
+        private async Task DownloadEpisode(Uri episodeUrl, IEpisodeProvider episodeProvider, CancellationToken cancellationToken = default)
         {
-            var episodeInfo = episodeProvider.GetEpisodeInfo(episodeUrl);
+            var episodeInfo = await episodeProvider.GetEpisodeInfoAsync(episodeUrl, cancellationToken);
             _logger.LogInformation($"Downloading {episodeInfo.GetFileName()}");
 
             var filename = _fileService.MakeValidFileName(episodeInfo.GetFileName());
@@ -126,8 +128,7 @@ namespace EpisodeDownloader
             _ffmpegService.DownloadEpisode(episodeInfo.StreamUrl, downloadFile.GetFullPath(), episodeInfo.Skip, episodeInfo.Duration);
             _fileService.MoveFile(downloadFile.GetFullPath(), finalFile.GetFullPath());
 
-            _historyService.AddDownloaded(episodeInfo.GetFileName(), episodeUrl, episodeInfo.StreamUrl);
-            return 0;
+            await _historyService.AddDownloadedAsync(episodeInfo.GetFileName(), episodeUrl, episodeInfo.StreamUrl);
         }
     }
 }

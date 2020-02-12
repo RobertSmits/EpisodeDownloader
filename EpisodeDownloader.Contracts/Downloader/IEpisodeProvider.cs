@@ -1,5 +1,6 @@
 ﻿using System;
-using EpisodeDownloader.Contracts;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EpisodeDownloader.Contracts.Downloader
 {
@@ -19,7 +20,7 @@ namespace EpisodeDownloader.Contracts.Downloader
         /// <returns>
         /// An array whose elements contain the season urls for the given show.
         /// </returns>
-        Uri[] GetShowSeasons(Uri showUrl);
+        Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get the episode urls for a given season url.
@@ -28,7 +29,7 @@ namespace EpisodeDownloader.Contracts.Downloader
         /// <returns>
         /// An array whose elements contain the episode urls for the given seaso.
         /// </returns>
-        Uri[] GetShowSeasonEpisodes(Uri seasonUrl);
+        Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get the episode info urls for a given show url.
@@ -37,6 +38,6 @@ namespace EpisodeDownloader.Contracts.Downloader
         /// <returns>
         /// The EpisodeInfo for the given episode.
         /// </returns>
-        EpisodeInfo GetEpisodeInfo(Uri episodeUrl);
+        Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default);
     }
 }

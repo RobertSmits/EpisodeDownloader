@@ -2,14 +2,14 @@
 {
     public class PlaylistResponse
     {
-        public String image { get; set; }
-        public Number length { get; set; }
-        public String description { get; set; }
-        public String publishedOn { get; set; }
-        public String label { get; set; }
-        public String video { get; set; }
-        public String uuid { get; set; }
-        public String url { get; set; }
+        public String Image { get; set; }
+        public Number Length { get; set; }
+        public String Description { get; set; }
+        public String PublishedOn { get; set; }
+        public String Label { get; set; }
+        public String Video { get; set; }
+        public String Uuid { get; set; }
+        public String Url { get; set; }
     }
 
     public class Number

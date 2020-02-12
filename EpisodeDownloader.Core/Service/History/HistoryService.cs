@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Threading.Tasks;
 using EpisodeDownloader.Core.Models.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,15 +16,15 @@ namespace EpisodeDownloader.Core.Service.History
             database.SaveChanges();
         }
 
-        public void AddDownloaded(string episodeName, Uri episodeUrl, Uri videoUrl)
+        public async Task AddDownloadedAsync(string episodeName, Uri episodeUrl, Uri videoUrl)
         {
             database.Set<Downloaded>().Add(new Downloaded { Name = episodeName, EpisodeUrl = episodeUrl.AbsoluteUri, VideoUrl = videoUrl.AbsoluteUri, DownloadDate = DateTime.Now });
-            database.SaveChanges();
+            await database.SaveChangesAsync();
         }
 
-        public bool CheckIfDownloaded(Uri episodeUrl)
+        public async Task<bool> CheckIfDownloadedAsync(Uri episodeUrl)
         {
-            return database.Set<Downloaded>().FirstOrDefault(x => x.EpisodeUrl == episodeUrl.AbsoluteUri) != null;
+            return await database.Set<Downloaded>().FirstOrDefaultAsync(x => x.EpisodeUrl == episodeUrl.AbsoluteUri) != null;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Text.Json;
+using System.Threading.Tasks;
 using EpisodeDownloader.Downloader.Vrt.Extensions;
 using EpisodeDownloader.Downloader.Vrt.Models;
 using EpisodeDownloader.Downloader.Vrt.Models.Auth;
@@ -27,25 +28,19 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
             _configuration = configMonitor.CurrentValue;
         }
 
-        public string VrtToken
+        public Task<string> GetVrtTokenAsync()
         {
-            get
-            {
-                return GetVrtToken(_configuration.Email, _configuration.Password);
-            }
+            return GetVrtTokenAsync(_configuration.Email, _configuration.Password);
         }
 
-        public string PlayerToken
+        public async Task<string> GetPlayerTokenAsync()
         {
-            get
-            {
-                if (_vrtPlayerTokenSet == null || _vrtPlayerTokenSet?.expirationDate <= DateTime.Now.ToUniversalTime())
-                    _vrtPlayerTokenSet = RefreshPlayerToken();
-                return _vrtPlayerTokenSet.vrtPlayerToken;
-            }
+            if (_vrtPlayerTokenSet == null || _vrtPlayerTokenSet?.expirationDate <= DateTime.Now.ToUniversalTime())
+                _vrtPlayerTokenSet = await RefreshPlayerTokenAsync();
+            return _vrtPlayerTokenSet.vrtPlayerToken;
         }
 
-        private GigyaAuthResponse GetGigyaAuth(string username, string password)
+        private async Task<GigyaAuthResponse> GetGigyaAuthAsync(string username, string password)
         {
             _logger.LogDebug("Logging in to Gigya");
             _logger.LogTrace("Username: " + username);
@@ -57,19 +52,19 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
                 .AddParameter("password", password)
                 .AddParameter("authMode", "cookie");
             var webClient = new WebClient();
-            var contentJson = webClient.DownloadString(url);
+            var contentJson = await webClient.DownloadStringTaskAsync(url);
             return JsonSerializer.Deserialize<GigyaAuthResponse>(contentJson);
         }
 
-        private string GetVrtToken(string username, string password)
+        private async Task<string> GetVrtTokenAsync(string username, string password)
         {
             _logger.LogDebug("Loggin in to VRT");
-            var gigyaResponse = GetGigyaAuth(username, password);
+            var gigyaResponse = await GetGigyaAuthAsync(username, password);
             var url = new Uri("https://token.vrt.be");
             var webClient = new WebClient();
             webClient.Headers.Add("Content-Type", "application/json");
             webClient.Headers.Add("Referer", "https://www.vrt.be/vrtnu/");
-            webClient.UploadString(url, JsonSerializer.Serialize(new VrtLoginPayload
+            await webClient.UploadStringTaskAsync(url, JsonSerializer.Serialize(new VrtLoginPayload
             {
                 uid = gigyaResponse.UID,
                 uidsig = gigyaResponse.UIDSignature,
@@ -81,13 +76,13 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
             return xVrtToken;
         }
 
-        private VrtPlayerTokenSet RefreshPlayerToken()
+        private async Task<VrtPlayerTokenSet> RefreshPlayerTokenAsync()
         {
             _logger.LogDebug("Refreshing player token");
             var url = "https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/tokens";
             var webClient = new WebClient();
-            webClient.Headers.Add("cookie", $"X-VRT-Token={VrtToken};");
-            var contentJson = webClient.UploadString(url, "");
+            webClient.Headers.Add("cookie", $"X-VRT-Token={await GetVrtTokenAsync()};");
+            var contentJson = await webClient.UploadStringTaskAsync(url, "");
             var tokenSet = JsonSerializer.Deserialize<VrtPlayerTokenSet>(contentJson);
             _logger.LogTrace("New PlayerToken: " + tokenSet.vrtPlayerToken);
             return tokenSet;

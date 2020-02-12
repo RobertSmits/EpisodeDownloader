@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace EpisodeDownloader.Core.Service.File
@@ -19,12 +20,12 @@ namespace EpisodeDownloader.Core.Service.File
         {
             string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
             string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
-            return Regex.Replace(name, invalidRegStr, "-");
+            return Regex.Replace(name.Replace("\"", "'"), invalidRegStr, "-");
         }
 
         public string MakeValidFolderName(string name)
         {
-            string invalidChars = Regex.Escape(new string(Path.GetInvalidPathChars()));
+            string invalidChars = Regex.Escape(new string(Path.GetInvalidPathChars().Concat(new[] { '\\', '/' }).ToArray()));
             string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
             return Regex.Replace(name, invalidRegStr, "-");
         }

@@ -1,6 +1,8 @@
 using System;
-using EpisodeDownloader.Contracts.Downloader;
+using System.Threading;
+using System.Threading.Tasks;
 using EpisodeDownloader.Contracts;
+using EpisodeDownloader.Contracts.Downloader;
 using Microsoft.Extensions.Logging;
 
 namespace EpisodeDownloader.Core.Downloader
@@ -19,18 +21,18 @@ namespace EpisodeDownloader.Core.Downloader
             return false;
         }
 
-        public Uri[] GetShowSeasons(Uri showUrl)
+        public Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
         {
             _logger.LogError($"No handler found for url: {showUrl}");
-            return new Uri[0];
+            return Task.FromResult(new Uri[0]);
         }
 
-        public Uri[] GetShowSeasonEpisodes(Uri seasonUrl)
+        public Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
         {
             throw new InvalidOperationException();
         }
 
-        public EpisodeInfo GetEpisodeInfo(Uri episodeUrl)
+        public Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default)
         {
             throw new InvalidOperationException();
         }

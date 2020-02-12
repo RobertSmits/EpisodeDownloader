@@ -37,22 +37,19 @@ namespace EpisodeDownloader.Downloader.Vier.Service
             _userPool = new CognitoUserPool(USER_POOL_ID, CLIENT_ID, _provider);
         }
 
-        public string IdToken
+        public async Task<string> GetIdTokenAsync()
         {
-            get
+            if (_authenticationResult == null)
             {
-                if (_authenticationResult == null)
-                {
-                    _authenticationResult = LoginAsync(_configuration.Email, _configuration.Password).Result;
-                    _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
-                }
-                else if (_expireDate <= DateTime.Now)
-                {
-                    _authenticationResult = RefreshTokens(_configuration.RefreshToken).Result;
-                    _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
-                }
-                return _authenticationResult.IdToken;
+                _authenticationResult = await LoginAsync(_configuration.Email, _configuration.Password);
+                _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
             }
+            else if (_expireDate <= DateTime.Now)
+            {
+                _authenticationResult = await RefreshTokens(_configuration.RefreshToken);
+                _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
+            }
+            return _authenticationResult.IdToken;
         }
 
         private async Task<AuthenticationResultType> LoginAsync(string username, string password)
