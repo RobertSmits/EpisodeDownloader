@@ -126,7 +126,7 @@ namespace EpisodeDownloader
             _fileService.EnsureFolderExists(savePath);
 
             _ffmpegService.DownloadEpisode(episodeInfo.StreamUrl, downloadFile.GetFullPath(), episodeInfo.Skip, episodeInfo.Duration);
-            _fileService.MoveFile(downloadFile.GetFullPath(), finalFile.GetFullPath());
+            _fileService.MoveFile(downloadFile.GetFullPath(), finalFile.GetFullPath(), _configuration.Overwrite);
 
             await _historyService.AddDownloadedAsync(episodeInfo.GetFileName(), episodeUrl, episodeInfo.StreamUrl);
         }

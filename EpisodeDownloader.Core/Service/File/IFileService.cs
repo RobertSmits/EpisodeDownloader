@@ -8,6 +8,6 @@
         string MakeValidFolderName(string name);
         string ReadFile(string path);
         void WriteFile(string path, string text);
-        void MoveFile(string sourceFileName, string destFileName);
+        void MoveFile(string sourceFileName, string destFileName, bool overwrite);
     }
 }

@@ -43,21 +43,24 @@ namespace EpisodeDownloader.Core.Service.File
             writer.Write(text);
         }
 
-        public void MoveFile(string sourceFileName, string destFileName)
+        public void MoveFile(string sourceFileName, string destFileName, bool overwrite)
         {
             string extension = Path.GetExtension(destFileName);
             string pathName = Path.GetDirectoryName(destFileName);
             string fileNameOnly = Path.Combine(pathName, Path.GetFileNameWithoutExtension(destFileName));
 
-            int i = 0;
-            // If the file exists, keep trying until it doesn't
-            while (System.IO.File.Exists(destFileName))
+            if (!overwrite)
             {
-                i += 1;
-                destFileName = string.Format("{0} ({1}){2}", fileNameOnly, i, extension);
+                int i = 0;
+                // If the file exists, keep trying until it doesn't
+                while (System.IO.File.Exists(destFileName))
+                {
+                    i += 1;
+                    destFileName = string.Format("{0} ({1}){2}", fileNameOnly, i, extension);
+                }
             }
 
-            System.IO.File.Move(sourceFileName, destFileName);
+            System.IO.File.Move(sourceFileName, destFileName, overwrite);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using EpisodeDownloader.Contracts.Exceptions;
+using EpisodeDownloader.Core.Models;
 using Microsoft.Extensions.Logging;
 
 namespace EpisodeDownloader.Core.Service.Ffmpeg
@@ -23,15 +24,20 @@ namespace EpisodeDownloader.Core.Service.Ffmpeg
         {
             var p = new Process();
             p.StartInfo.FileName = "ffmpeg";
-            var argumentString = "-y -hide_banner -loglevel panic ";
-            argumentString += $"-i \"{streamUrl.AbsoluteUri}\" ";
-            argumentString += skip.TotalSeconds > 0 ? $"-ss {skip.TotalSeconds} " : "";
-            argumentString += duration.TotalSeconds > 0 ? $"-to {duration.TotalSeconds} " : "";
-            argumentString += $" -c copy -copyts \"{filePath}\"";
+            var arguments = new FfmpegArgumentBuilder()
+                .AllowOverwrite()
+                .HideBanner()
+                .Loglevel("panic")
+                .StartTimeOffset(skip)
+                .Input(streamUrl.AbsoluteUri)
+                .Duration(duration)
+                .Codec("copy")
+                //.CopyTimeStamps()
+                .Output(filePath);
 
-            _logger.LogDebug($"Running ffmpeg: ffmpeg {argumentString}");
+            _logger.LogDebug($"Running ffmpeg: ffmpeg {arguments}");
 
-            p.StartInfo.Arguments = argumentString;
+            p.StartInfo.Arguments = arguments.ToString();
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardError = true;
             if (!p.Start())

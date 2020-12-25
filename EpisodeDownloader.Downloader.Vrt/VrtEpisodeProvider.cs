@@ -47,12 +47,12 @@ namespace EpisodeDownloader.Downloader.Vrt
         public async Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
         {
             var html = await new HtmlWeb().LoadFromWebAsync(seasonUrl, null, null, cancellationToken);
-            var seasonEpisodes = html.DocumentNode.SelectSingleNode("//nui-list[@id='episodelist-list']//nui-list--content")
+            var seasonEpisodes = html.DocumentNode.SelectSingleNode("//nui-list[@id='episodes-list']//nui-list--content")
                 ?.SelectNodes(".//li//nui-tile")
                 ?.Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
                 .OrderBy(x => x.AbsoluteUri)
                 .ToArray();
-            return seasonEpisodes ?? (html.DocumentNode.SelectSingleNode("//div[@class='vrtvideo']") != null ? new Uri[] { seasonUrl } : new Uri[0]);
+            return seasonEpisodes ?? (html.DocumentNode.SelectSingleNode("//div[@class='video-player']") != null ? new Uri[] { seasonUrl } : new Uri[0]);
         }
 
         public async Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default)
@@ -80,8 +80,8 @@ namespace EpisodeDownloader.Downloader.Vrt
                 Episode = episodeInfo.episodeNumber,
                 Title = episodeInfo.title,
                 StreamUrl = episodeDownloadUrl,
-                Skip = TimeSpan.FromSeconds(pubInfo.playlist.content.TakeWhile(x => !x.skippable).Sum(x => x.duration) / 1000),
-                Duration = TimeSpan.FromSeconds((pubInfo.playlist.content.FirstOrDefault(x => x.skippable)?.duration ?? 0) / 1000),
+                Skip = TimeSpan.FromSeconds(pubInfo.playlist.content.TakeWhile(x => x.eventType != "STANDARD").Sum(x => x.duration) / 1000),
+                Duration = TimeSpan.FromSeconds((pubInfo.playlist.content.FirstOrDefault(x => x.eventType == "STANDARD")?.duration ?? 0) / 1000),
             };
         }
     }

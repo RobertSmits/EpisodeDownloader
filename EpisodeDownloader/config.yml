@@ -1,8 +1,10 @@
 EpisodeDownloader:
     DownloadPath: Downloads
     SavePath: Downloads
+    Overwrite: false
     SaveShowsInFolders: true
     SaveSeasonsInFolders: true
+    DownloadExtension: mkv
     WatchUrls: []
 Logging:
     LogLevel:

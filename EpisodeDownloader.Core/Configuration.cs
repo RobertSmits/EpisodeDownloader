@@ -6,6 +6,7 @@ namespace EpisodeDownloader.Core
     {
         public string DownloadPath { get; set; }
         public string SavePath { get; set; }
+        public bool Overwrite { get; set; }
         public bool SaveShowsInFolders { get; set; }
         public bool SaveSeasonsInFolders { get; set; }
         public string DownloadExtension { get; set; } = "mp4";

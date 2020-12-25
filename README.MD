@@ -4,11 +4,11 @@ A downloader for [VRT Nu](https://www.vrt.be/vrtnu/) and [Vier](https://www.vier
 
 ## Requirements
 
-This project uses the .NET Core 2.2 runtime.
-To build this project you need to have the .NET Core 2.2 SDK installed on your system.
-If you only want to run the compiled binary the .NET Core 2.2 Runtime will do.
+This project uses the .NET Core 3.1 runtime.
+To build this project you need to have the .NET Core  SDK installed on your system.
+If you only want to run the compiled binary the .NET Core 3.1 Runtime will do.
 
-[download link](https://github.com/dotnet/core/tree/master/release-notes/2.2)
+[download link](https://github.com/dotnet/core/tree/master/release-notes/3.1)
 
 ## Building
 
@@ -23,7 +23,7 @@ $ dotnet build -c Release
 After building the project you can run the program by navigating to the outpt folder and starting the dotnet executable
 
 ``` bash
-$ cd bin/Release/netcoreapp2.2
+$ cd bin/Release/netcoreapp3.1
 $ dotnet ./EpisodeDownloader
 ```
 
@@ -40,8 +40,10 @@ The `EpisodeDownloader` section of the configuration file contains the core conf
 EpisodeDownloader:
     DownloadPath: /tmp          # Path where new episodes wil be downloaded to
     SavePath: Downloads         # Completed episodes wil be moved here
+    Overwrite: false            # Overwrite file if destiantion alreadey exists
     SaveShowsInFolders: true    # Create separate sub folders per show
     SaveSeasonsInFolders: true  # Create separate sub folders per season
+    DownloadExtension: mkv      # The output file extension
     WatchUrls:                  # Urls to watch
         - https://www.vrt.be/vrtnu/a-z/w817.relevant/
         - https://www.vrt.be/vrtnu/a-z/thuis.relevant/

@@ -25,11 +25,13 @@ namespace EpisodeDownloader.Core.Models
             }
         }
 
-        public File(string path)
+        public static File FromPath(string path)
         {
-            Name = System.IO.Path.GetFileNameWithoutExtension(path);
-            Extension = System.IO.Path.GetExtension(path);
-            Path = System.IO.Path.GetDirectoryName(path);
+            return new File(
+                name: System.IO.Path.GetFileNameWithoutExtension(path),
+                extension: System.IO.Path.GetExtension(path),
+                path: System.IO.Path.GetDirectoryName(path)
+            );
         }
     }
 }
