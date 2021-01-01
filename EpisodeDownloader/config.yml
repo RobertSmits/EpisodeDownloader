@@ -9,9 +9,9 @@ EpisodeDownloader:
 Logging:
     LogLevel:
         Default: Information
-VrtDownloader:
+VrtEpisodeProvider:
     Email:
     Password:
-VierDownloader:
-    LastAuthUser:
-    RefreshToken:
+VierEpisodeProvider:
+    Email:
+    Password:
