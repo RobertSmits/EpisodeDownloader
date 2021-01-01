@@ -10,7 +10,6 @@ using EpisodeDownloader.Contracts.Exceptions;
 using EpisodeDownloader.Downloader.Vrt.Extensions;
 using EpisodeDownloader.Downloader.Vrt.Models.Api;
 using EpisodeDownloader.Downloader.Vrt.Service;
-using HtmlAgilityPack;
 
 namespace EpisodeDownloader.Downloader.Vrt
 {
@@ -28,31 +27,18 @@ namespace EpisodeDownloader.Downloader.Vrt
             return showUrl.AbsoluteUri.Contains("vrt.be");
         }
 
-        public async Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
+        public Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
         {
-            var html = await new HtmlWeb().LoadFromWebAsync(showUrl, null, null, cancellationToken);
-            var seasonSelectOptions = html.DocumentNode.SelectNodes("//*[@class=\"vrt-labelnav\"]")
-                ?.FirstOrDefault()
-                ?.SelectNodes(".//li//a");
-
-            if ((seasonSelectOptions?.Count ?? 0) <= 1)
-                return new Uri[] { showUrl };
-
-            return seasonSelectOptions
-                .Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
-                .OrderBy(x => x.AbsoluteUri)
-                .ToArray();
+            return Task.FromResult(new Uri[] { showUrl });
         }
 
         public async Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
         {
-            var html = await new HtmlWeb().LoadFromWebAsync(seasonUrl, null, null, cancellationToken);
-            var seasonEpisodes = html.DocumentNode.SelectSingleNode("//nui-list[@id='episodes-list']//nui-list--content")
-                ?.SelectNodes(".//li//nui-tile")
-                ?.Select(x => new Uri("https://www.vrt.be" + x.GetAttributeValue("href", "")))
-                .OrderBy(x => x.AbsoluteUri)
-                .ToArray();
-            return seasonEpisodes ?? (html.DocumentNode.SelectSingleNode("//div[@class='video-player']") != null ? new Uri[] { seasonUrl } : new Uri[0]);
+            var searchUrl = "//" + seasonUrl.Host + seasonUrl.AbsolutePath.Replace(".relevant", "");
+            var uri = new Uri("https://search.vrt.be/search?size=150&facets%5BprogramUrl%5D=" + searchUrl);
+            var searchResponse = await new WebClient().DownloadStringTaskAsync(uri);
+            var searchResults = JsonSerializer.Deserialize<SearchResponse>(searchResponse);
+            return searchResults.results.Select(x => new Uri(seasonUrl.Scheme + ":" + x.url)).ToArray();
         }
 
         public async Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default)

@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.18" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.1" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.1" />
     <PackageReference Include="microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.1" />
