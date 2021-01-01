@@ -48,8 +48,8 @@
     <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.SecurityToken.dll" DestinationFolder="$(TargetDir)" />
     <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.CognitoIdentity.dll" DestinationFolder="$(TargetDir)" />
     <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.CognitoIdentityProvider.dll" DestinationFolder="$(TargetDir)" />
-      <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.Extensions.CognitoAuthentication.dll" DestinationFolder="$(TargetDir)" />
-      <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/Newtonsoft.Json.dll" DestinationFolder="$(TargetDir)" />
+    <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/AWSSDK.Extensions.CognitoAuthentication.dll" DestinationFolder="$(TargetDir)" />
+    <Copy SourceFiles="$(SolutionDir)EpisodeDownloader.Downloader.Vier/$(OutDir)/Newtonsoft.Json.dll" DestinationFolder="$(TargetDir)" />
   </Target>
 
 </Project>

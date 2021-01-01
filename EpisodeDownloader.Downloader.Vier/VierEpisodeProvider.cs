@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -54,7 +54,7 @@ namespace EpisodeDownloader.Downloader.Vier
             {
                 var node = html.DocumentNode.SelectSingleNode($"//*[@{current}]");
                 if (node is null) continue;
-                heroData = node.GetAttributeValue("current", null);
+                heroData = node.GetAttributeValue(current, null);
                 if (heroData != null) break;
             }
 

@@ -46,7 +46,7 @@ namespace EpisodeDownloader.Downloader.Vier.Service
             }
             else if (_expireDate <= DateTime.Now)
             {
-                _authenticationResult = await RefreshTokens(_configuration.RefreshToken);
+                _authenticationResult = await RefreshTokens(_authenticationResult.RefreshToken);
                 _expireDate = DateTime.Now.AddSeconds(_authenticationResult.ExpiresIn);
             }
             return _authenticationResult.IdToken;
