@@ -1,6 +1,6 @@
 ﻿using EpisodeDownloader.Contracts.DependencyInjection;
 using EpisodeDownloader.Core.Downloader;
-using EpisodeDownloader.Core.Service.Ffmpeg;
+using EpisodeDownloader.Core.Service.Download;
 using EpisodeDownloader.Core.Service.File;
 using EpisodeDownloader.Core.Service.History;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +20,7 @@ namespace EpisodeDownloader.Core
             base.RegisterTypes(services, configuration);
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IHistoryService, HistoryService>();
-            services.AddTransient<IFfmpegService, FfmpegService>();
+            services.AddTransient<IDownloadService, FfmpegDownloadService>();
             services.AddTransient<DefaultDownloader>();
             services.Configure<Configuration>(configuration.GetSection(nameof(EpisodeDownloader)));
         }

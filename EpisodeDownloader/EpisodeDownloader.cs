@@ -8,7 +8,7 @@ using EpisodeDownloader.Core;
 using EpisodeDownloader.Core.Downloader;
 using EpisodeDownloader.Core.Extensions;
 using EpisodeDownloader.Core.Models;
-using EpisodeDownloader.Core.Service.Ffmpeg;
+using EpisodeDownloader.Core.Service.Download;
 using EpisodeDownloader.Core.Service.File;
 using EpisodeDownloader.Core.Service.History;
 using Microsoft.Extensions.Logging;
@@ -21,7 +21,7 @@ namespace EpisodeDownloader
         private readonly Configuration _configuration;
         private readonly ILogger _logger;
         private readonly IFileService _fileService;
-        private readonly IFfmpegService _ffmpegService;
+        private readonly IDownloadService _downloadService;
         private readonly IHistoryService _historyService;
         private readonly IEnumerable<IEpisodeProvider> _episodeProviders;
         private readonly DefaultDownloader _defaultDownloader;
@@ -31,7 +31,7 @@ namespace EpisodeDownloader
                 IOptions<Configuration> configuration,
                 ILogger<EpisodeDownloader> logger,
                 IFileService fileService,
-                IFfmpegService ffmpegService,
+                IDownloadService downloadService,
                 IHistoryService historyService,
                 IEnumerable<IEpisodeProvider> episodeProviders,
                 DefaultDownloader defaultDownloader
@@ -40,7 +40,7 @@ namespace EpisodeDownloader
             _configuration = configuration.Value;
             _logger = logger;
             _fileService = fileService;
-            _ffmpegService = ffmpegService;
+            _downloadService = downloadService;
             _historyService = historyService;
             _episodeProviders = episodeProviders;
             _defaultDownloader = defaultDownloader;
@@ -61,7 +61,7 @@ namespace EpisodeDownloader
         {
             _logger.LogInformation("Current show: " + showUrl);
             var seasons = await episodeProvider.GetShowSeasonsAsync(showUrl, cancellationToken);
-            if (seasons == null)
+            if (seasons == null || seasons.Length == 0)
             {
                 _logger.LogInformation("No Seasons Available");
                 return;
@@ -77,7 +77,7 @@ namespace EpisodeDownloader
         {
             _logger.LogInformation("Current season: " + seasonUrl);
             var episodes = await episodeProvider.GetShowSeasonEpisodesAsync(seasonUrl, cancellationToken);
-            if (episodes.Length == 0)
+            if (episodes == null || episodes.Length == 0)
             {
                 _logger.LogInformation("No Episodes Available");
                 return;
@@ -125,7 +125,7 @@ namespace EpisodeDownloader
             _fileService.EnsureFolderExists(_configuration.DownloadPath);
             _fileService.EnsureFolderExists(savePath);
 
-            _ffmpegService.DownloadEpisode(episodeInfo.StreamUrl, downloadFile.GetFullPath(), episodeInfo.Skip, episodeInfo.Duration);
+            _downloadService.DownloadEpisode(episodeInfo.StreamUrl, downloadFile.GetFullPath(), episodeInfo.Skip, episodeInfo.Duration);
             _fileService.MoveFile(downloadFile.GetFullPath(), finalFile.GetFullPath(), _configuration.Overwrite);
 
             await _historyService.AddDownloadedAsync(episodeInfo.GetFileName(), episodeUrl, episodeInfo.StreamUrl);

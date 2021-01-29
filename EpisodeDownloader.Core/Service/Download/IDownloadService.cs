@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace EpisodeDownloader.Core.Service.Ffmpeg
+namespace EpisodeDownloader.Core.Service.Download
 {
-    public interface IFfmpegService
+    public interface IDownloadService
     {
         void DownloadEpisode(Uri streamUrl, string filePath);
         void DownloadEpisode(Uri streamUrl, string filePath, TimeSpan skip, TimeSpan duration);

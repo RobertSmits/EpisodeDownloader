@@ -4,13 +4,13 @@ using EpisodeDownloader.Contracts.Exceptions;
 using EpisodeDownloader.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace EpisodeDownloader.Core.Service.Ffmpeg
+namespace EpisodeDownloader.Core.Service.Download
 {
-    public class FfmpegService : IFfmpegService
+    public class FfmpegDownloadService : IDownloadService
     {
         private readonly ILogger _logger;
 
-        public FfmpegService(ILogger<FfmpegService> logger)
+        public FfmpegDownloadService(ILogger<FfmpegDownloadService> logger)
         {
             _logger = logger;
         }
