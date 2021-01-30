@@ -26,12 +26,15 @@ namespace EpisodeDownloader.Downloader.Vier
         {
             return showUrl.AbsoluteUri.Contains("vier.be")
                 || showUrl.AbsoluteUri.Contains("vijf.be")
-                || showUrl.AbsoluteUri.Contains("zestv.be");
+                || showUrl.AbsoluteUri.Contains("zestv.be")
+                || showUrl.AbsoluteUri.Contains("goplay.be");
         }
 
         public Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new Uri[] { showUrl });
+            return Task.FromResult(new Uri[] {
+                new Uri($"{showUrl.Scheme}://www.goplay.be{showUrl.AbsolutePath}"),
+            });
         }
 
         public async Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
