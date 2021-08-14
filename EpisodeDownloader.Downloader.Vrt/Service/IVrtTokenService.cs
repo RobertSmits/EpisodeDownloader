@@ -4,7 +4,7 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
 {
     public interface IVrtTokenService
     {
-        Task<string> GetVrtTokenAsync();
+        Task<(string, string)> GetVrtTokenAsync();
         Task<string> GetPlayerTokenAsync();
     }
 }

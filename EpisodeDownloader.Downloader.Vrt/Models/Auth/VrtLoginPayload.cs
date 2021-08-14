@@ -2,9 +2,10 @@
 {
     public class VrtLoginPayload
     {
-        public string uid { get; set; }
-        public string uidsig { get; set; }
-        public string ts { get; set; }
-        public string email { get; set; }
+        public string UID { get; set; }
+        public string UIDSignature { get; set; }
+        public string signatureTimestamp { get; set; }
+        public string client_id { get; set; }
+        public string _csrf { get; set; }
     }
 }
