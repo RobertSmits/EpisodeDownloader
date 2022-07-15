@@ -54,7 +54,7 @@ namespace EpisodeDownloader.Downloader.Vrt.Models.Api
         public string description { get; set; }
         public object displayOptions { get; set; }
         public int duration { get; set; }
-        public int episodeNumber { get; set; }
+        public int? episodeNumber { get; set; }
         public string externalPermalink { get; set; }
         public string formattedBroadcastDate { get; set; }
         public string formattedBroadcastFullDate { get; set; }
@@ -82,7 +82,7 @@ namespace EpisodeDownloader.Downloader.Vrt.Models.Api
         public bool seasonHidden { get; set; }
         public string seasonName { get; set; }
         public int seasonNbOfEpisodes { get; set; }
-        public int seasonNumber { get; set; }
+        public int? seasonNumber { get; set; }
         public string seasonPath { get; set; }
         public string seasonTitle { get; set; }
         public string shortDescription { get; set; }

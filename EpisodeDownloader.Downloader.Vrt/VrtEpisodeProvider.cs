@@ -34,11 +34,13 @@ namespace EpisodeDownloader.Downloader.Vrt
 
         public async Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
         {
-            var searchUrl = "//" + seasonUrl.Host + seasonUrl.AbsolutePath.Replace(".relevant", "");
-            var uri = new Uri("https://search.vrt.be/search?size=150&facets%5BprogramUrl%5D=" + searchUrl);
+            var programName = seasonUrl.OriginalString.Split('/', StringSplitOptions.RemoveEmptyEntries).Last().Replace(".relevant", "");
+            var humanReadableName = programName.Replace("-", " ");
+
+            var uri = new Uri($"https://search7.vrt.be/search?q={humanReadableName}&size=300");
             var searchResponse = await new WebClient().DownloadStringTaskAsync(uri);
             var searchResults = JsonSerializer.Deserialize<SearchResponse>(searchResponse);
-            return searchResults.results.Select(x => new Uri(seasonUrl.Scheme + ":" + x.url)).ToArray();
+            return searchResults.results.Where(x => x.programUrl.Contains(programName)).Select(x => new Uri(x.url)).ToArray();
         }
 
         public async Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default)
@@ -48,16 +50,21 @@ namespace EpisodeDownloader.Downloader.Vrt
             var contentJson = await new WebClient().DownloadStringTaskAsync(contentJsonUrl);
             var episodeInfo = JsonSerializer.Deserialize<VrtContent>(contentJson);
 
-            var pbsPubURL = new Uri($"https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/videos/{episodeInfo.publicationId}${episodeInfo.videoId}")
+            var pbsPubURL = new Uri($"https://media-services-public.vrt.be/media-aggregator/v2/media-items/{episodeInfo.publicationId}%24{episodeInfo.videoId}")
                 .AddParameter("vrtPlayerToken", await _vrtTokenService.GetPlayerTokenAsync())
-                .AddParameter("client", "vrtvideo");
+                .AddParameter("client", "vrtnu-web@PROD");
 
             var pbsPubJson = await new WebClient().DownloadStringTaskAsync(pbsPubURL);
             var pubInfo = JsonSerializer.Deserialize<VrtPbsPubV2>(pbsPubJson);
+            if (pubInfo.drm is not null)
+                throw new DownloadException("Episode has DRM protection!");
 
-            var episodeDownloadUrl = pubInfo.targetUrls.Where(x => x.type.ToLower() == "hls").Select(x => new Uri(x.url)).FirstOrDefault();
+            var dashUrl = pubInfo.targetUrls.FirstOrDefault(x => x.type.ToLower() == "mpeg_dash")?.url;
+            var hlsUrl = pubInfo.targetUrls.FirstOrDefault(x => x.type.ToLower() == "hls")?.url;
+            var episodeDownloadUrl = dashUrl ?? hlsUrl;
+
             if (episodeDownloadUrl == null)
-                throw new DownloadException("Couldn't find a valid M3U8");
+                throw new DownloadException("Couldn't find a valid dowload playlist");
 
             return new EpisodeInfo
             {
@@ -65,7 +72,7 @@ namespace EpisodeDownloader.Downloader.Vrt
                 Season = episodeInfo.seasonTitle,
                 Episode = episodeInfo.episodeNumber,
                 Title = episodeInfo.title,
-                StreamUrl = episodeDownloadUrl,
+                StreamUrl = new Uri(episodeDownloadUrl),
                 Skip = TimeSpan.FromSeconds(pubInfo.playlist.content.TakeWhile(x => x.eventType != "STANDARD").Sum(x => x.duration) / 1000),
                 Duration = TimeSpan.FromSeconds((pubInfo.playlist.content.FirstOrDefault(x => x.eventType == "STANDARD")?.duration ?? 0) / 1000),
             };

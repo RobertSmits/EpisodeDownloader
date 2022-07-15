@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 using EpisodeDownloader.Downloader.Vrt.Extensions;
 using EpisodeDownloader.Downloader.Vrt.Models;
 using EpisodeDownloader.Downloader.Vrt.Models.Auth;
+using JWT;
+using JWT.Algorithms;
+using JWT.Serializers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -21,7 +24,11 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
         const string TOKEN_GATEWAY_URL = "https://token.vrt.be";
         const string USER_TOKEN_GATEWAY_URL = "https://token.vrt.be/vrtnuinitlogin?provider=site&destination=https://www.vrt.be/vrtnu/";
         const string ROAMING_TOKEN_GATEWAY_URL = "https://token.vrt.be/vrtnuinitloginEU?destination=https://www.vrt.be/vrtnu/";
-        const string PLAYER_TOKEN_URL = "https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v1/tokens";
+        const string PLAYER_TOKEN_URL = "https://media-services-public.vrt.be/vualto-video-aggregator-web/rest/external/v2/tokens";
+
+
+        const string PLAYER_INFO_JWT_KEY_ID = "0-0Fp51UZykfaiCJrfTE3+oMI8zvDteYfPtR+2n1R+z8w=";
+        const string PLAYER_INFO_JWT_KEY = "2a9251d782700769fb856da5725daf38661874ca6f80ae7dc2b05ec1a81a24ae";
 
         private VrtPlayerTokenSet _vrtPlayerTokenSet;
         private readonly ILogger _logger;
@@ -110,26 +117,132 @@ namespace EpisodeDownloader.Downloader.Vrt.Service
             request = new HttpRequestMessage(HttpMethod.Get, response.Headers.Location);
             request.Headers.Add("Cookie", $"state={state}");
             response = await cl.SendAsync(request);
+            var refreshtoken = GetCookieValue(response, "vrtlogin-rt");
+            var accesstoken = GetCookieValue(response, "vrtlogin-at");
             var xVrtToken = GetCookieValue(response, "X-VRT-Token");
 
-            //cookies = response.Headers.GetValues("set-cookie").Aggregate((prev, current) => prev + ";" + current);
-            //var xVrtToken = cookies.Split(';').First(x => x.StartsWith("X-VRT-Token")).Replace("X-VRT-Token=", "");
             _logger.LogTrace("New X-VRT-TOKEN: " + xVrtToken);
             return (xVrtToken, session);
         }
 
         private async Task<VrtPlayerTokenSet> RefreshPlayerTokenAsync()
         {
+            var playerInfoToken = GeneratePlayerInfoJwt();
+
             _logger.LogDebug("Refreshing player token");
             var (token, session) = await GetVrtTokenAsync();
             var request = new HttpRequestMessage(HttpMethod.Post, PLAYER_TOKEN_URL);
-            request.Headers.Add("cookie", $"X-VRT-Token={token};SESSION={session}");
-            request.Content = new StringContent(JsonSerializer.Serialize(new { identityToken = token }), System.Text.Encoding.UTF8, "application/json");
+            request.Content = new StringContent(JsonSerializer.Serialize(new
+            {
+                identityToken = token,
+                playerInfo = playerInfoToken,
+            }), System.Text.Encoding.UTF8, "application/json");
             using var response = await _httpClient.SendAsync(request);
             var content = await response.Content.ReadAsStringAsync();
             var tokenSet = JsonSerializer.Deserialize<VrtPlayerTokenSet>(content);
             _logger.LogTrace("New PlayerToken: " + tokenSet.vrtPlayerToken);
+            ValidatePlayerToken(tokenSet.vrtPlayerToken);
             return tokenSet;
+        }
+
+        private string GeneratePlayerInfoJwt()
+        {
+            var playerInfoJson = new PlayerInfo
+            {
+                exp = DateTimeOffset.Now.ToUnixTimeSeconds() + 1000,
+
+                // Needs to be desktop 
+                platform = "desktop",
+
+                app = new PlayerInfo.App
+                {
+                    // Needs to be set to browser when platform is desktop
+                    type = "browser",
+
+                    // Actually not important
+                    name = "Firefox",
+                    version = "102.0"
+                },
+                device = "undefined (undefined)",
+
+                // Actually not important
+                os = new PlayerInfo.Os
+                {
+                    // Actually not important
+                    name = "Windows",
+                    version = "10"
+                },
+
+                // Actually not important
+                player = new PlayerInfo.Player
+                {
+                    name = "VRT web player",
+                    version = "2.4.1-prod-2022-06-28T07:01:03"
+                }
+            };
+
+            var encoder = new JwtEncoder(new HMACSHA256Algorithm(), new SystemTextSerializer(), new JwtBase64UrlEncoder());
+
+            var jwtToken = encoder.Encode(
+                new Dictionary<string, object>
+                {
+                    { "kid", PLAYER_INFO_JWT_KEY_ID},
+                },
+                playerInfoJson,
+                PLAYER_INFO_JWT_KEY);
+
+            return jwtToken;
+        }
+
+        private void ValidatePlayerToken(string playerToken)
+        {
+            var decoder = new JwtDecoder(new SystemTextSerializer(), new JwtBase64UrlEncoder());
+            var playerTokenObj = decoder.DecodeToObject<PlayerToken>(new JwtParts(playerToken), false);
+            if (playerTokenObj.maxQuality != "HD")
+            {
+                _logger.LogWarning("Player token max quality: [{maxQuality}] differs from [HD] / playerToken [{playerToken}]", playerTokenObj.maxQuality, playerTokenObj);
+            }
+        }
+    }
+
+    internal record PlayerToken
+    {
+        public long exp { get; init; }
+        public string geoLocation { get; init; }
+        public bool authenticated { get; init; }
+        public string userStatus { get; init; }
+        public string ageCategory { get; init; }
+        public string maxQuality { get; init; }
+    }
+
+    internal record PlayerInfo
+    {
+        public long exp { get; init; }
+        public string platform { get; init; }
+        public App app { get; init; }
+        public string device { get; init; }
+        public Os os { get; init; }
+        public Player player { get; init; }
+
+        public record App
+        {
+            public string type { get; init; }
+            public string name { get; init; }
+            public string version { get; init; }
+
+        }
+
+        public record Os
+        {
+            public string name { get; init; }
+            public string version { get; init; }
+        }
+
+        public record Player
+        {
+
+            public string name { get; init; }
+            public string version { get; init; }
         }
     }
 }

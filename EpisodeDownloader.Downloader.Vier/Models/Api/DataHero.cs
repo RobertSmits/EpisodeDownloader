@@ -87,7 +87,7 @@
         public bool IsSeekable { get; set; }
         public bool IsStreaming { get; set; }
         public string Link { get; set; }
-        public int[] MidrollOffsets { get; set; }
+        public float[] MidrollOffsets { get; set; }
         public Pageinfo PageInfo { get; set; }
         public string PageUuid { get; set; }
         public string ParentalRating { get; set; }
