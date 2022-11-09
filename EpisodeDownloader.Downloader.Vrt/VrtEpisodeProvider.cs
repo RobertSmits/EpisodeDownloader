@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
-using System.Net;
-using System.Text.Json;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using EpisodeDownloader.Contracts;
@@ -10,16 +9,19 @@ using EpisodeDownloader.Contracts.Exceptions;
 using EpisodeDownloader.Downloader.Vrt.Extensions;
 using EpisodeDownloader.Downloader.Vrt.Models.Api;
 using EpisodeDownloader.Downloader.Vrt.Service;
+using Newtonsoft.Json.Linq;
 
 namespace EpisodeDownloader.Downloader.Vrt
 {
     public class VrtEpisodeProvider : IEpisodeProvider
     {
+        private readonly HttpClient _httpClient;
         private readonly IVrtTokenService _vrtTokenService;
 
         public VrtEpisodeProvider(IVrtTokenService vrtTokenService)
         {
             _vrtTokenService = vrtTokenService;
+            _httpClient = new HttpClient();
         }
 
         public bool CanHandleUrl(Uri showUrl)
@@ -27,40 +29,45 @@ namespace EpisodeDownloader.Downloader.Vrt
             return showUrl.AbsoluteUri.Contains("vrt.be");
         }
 
-        public Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
+        public async Task<Uri[]> GetShowSeasonsAsync(Uri showUrl, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new Uri[] { showUrl });
+            var programName = showUrl.OriginalString.Split('/', StringSplitOptions.RemoveEmptyEntries).Last().Replace(".relevant", "");
+            var uri = new Uri($"https://www.vrt.be/vrtnu/a-z/{programName}.model.json");
+
+            var searchResponse = await _httpClient.GetStringAsync(uri);
+            var json = JObject.Parse(searchResponse);
+            if (json["details"]["data"]["program"]["seasons"] is null)
+                return Array.Empty<Uri>();
+
+            return json["details"]["data"]["program"]["seasons"].Select(x => new Uri("https://www.vrt.be" + x["reference"]["modelUri"].ToString())).ToArray();
         }
 
         public async Task<Uri[]> GetShowSeasonEpisodesAsync(Uri seasonUrl, CancellationToken cancellationToken = default)
         {
-            var programName = seasonUrl.OriginalString.Split('/', StringSplitOptions.RemoveEmptyEntries).Last().Replace(".relevant", "");
-            var humanReadableName = programName.Replace("-", " ");
-
-            var uri = new Uri($"https://search7.vrt.be/search?q={humanReadableName}&size=300");
-            var searchResponse = await new WebClient().DownloadStringTaskAsync(uri);
-            var searchResults = JsonSerializer.Deserialize<SearchResponse>(searchResponse);
-            return searchResults.results.Where(x => x.programUrl.Contains(programName)).Select(x => new Uri(x.url)).ToArray();
+            var searchResponse = await _httpClient.GetStringAsync(seasonUrl);
+            var json = JObject.Parse(searchResponse);
+            return json[":items"]["par"][":items"]["container"][":items"]["list"][":items"].Values().Select(x => new Uri("https://www.vrt.be" + x["reference"]["modelUri"].ToString())).ToArray();
         }
 
         public async Task<EpisodeInfo> GetEpisodeInfoAsync(Uri episodeUrl, CancellationToken cancellationToken = default)
         {
-            var episodeURL = episodeUrl.AbsoluteUri;
-            var contentJsonUrl = episodeURL.Remove(episodeURL.Length - 1) + ".content.json";
-            var contentJson = await new WebClient().DownloadStringTaskAsync(contentJsonUrl);
-            var episodeInfo = JsonSerializer.Deserialize<VrtContent>(contentJson);
+            var searchResponse = await _httpClient.GetStringAsync(episodeUrl);
+            var epInfo = System.Text.Json.JsonSerializer.Deserialize<SearchResponse>(searchResponse);
 
-            var pbsPubURL = new Uri($"https://media-services-public.vrt.be/media-aggregator/v2/media-items/{episodeInfo.publicationId}%24{episodeInfo.videoId}")
+            var videoId = epInfo.Details.Data.Episode.VideoId;
+            var publicationId = epInfo.Details.Data.Episode.PublicationId;
+
+            var pbsPubURL = new Uri($"https://media-services-public.vrt.be/media-aggregator/v2/media-items/{publicationId}%24{videoId}")
                 .AddParameter("vrtPlayerToken", await _vrtTokenService.GetPlayerTokenAsync())
                 .AddParameter("client", "vrtnu-web@PROD");
 
-            var pbsPubJson = await new WebClient().DownloadStringTaskAsync(pbsPubURL);
-            var pubInfo = JsonSerializer.Deserialize<VrtPbsPubV2>(pbsPubJson);
-            if (pubInfo.drm is not null)
+            var pbsPubJson = await _httpClient.GetStringAsync(pbsPubURL);
+            var pubInfo = System.Text.Json.JsonSerializer.Deserialize<VrtPbsPubV2>(pbsPubJson);
+            if (pubInfo.Drm is not null)
                 throw new DownloadException("Episode has DRM protection!");
 
-            var dashUrl = pubInfo.targetUrls.FirstOrDefault(x => x.type.ToLower() == "mpeg_dash")?.url;
-            var hlsUrl = pubInfo.targetUrls.FirstOrDefault(x => x.type.ToLower() == "hls")?.url;
+            var dashUrl = pubInfo.TargetUrls.FirstOrDefault(x => x.Type.ToLower() == "mpeg_dash")?.Url;
+            var hlsUrl = pubInfo.TargetUrls.FirstOrDefault(x => x.Type.ToLower() == "hls")?.Url;
             var episodeDownloadUrl = dashUrl ?? hlsUrl;
 
             if (episodeDownloadUrl == null)
@@ -68,13 +75,13 @@ namespace EpisodeDownloader.Downloader.Vrt
 
             return new EpisodeInfo
             {
-                ShowName = episodeInfo.programTitle,
-                Season = episodeInfo.seasonTitle,
-                Episode = episodeInfo.episodeNumber,
-                Title = episodeInfo.title,
+                ShowName = epInfo.Details.Data.Program.Title,
+                Season = epInfo.Details.Data.Season.Name,
+                Episode = epInfo.Details.Data.Episode.Number.Raw,
+                Title = epInfo.Details.Title,
                 StreamUrl = new Uri(episodeDownloadUrl),
-                Skip = TimeSpan.FromSeconds(pubInfo.playlist.content.TakeWhile(x => x.eventType != "STANDARD").Sum(x => x.duration) / 1000),
-                Duration = TimeSpan.FromSeconds((pubInfo.playlist.content.FirstOrDefault(x => x.eventType == "STANDARD")?.duration ?? 0) / 1000),
+                Skip = TimeSpan.FromSeconds(pubInfo.Playlist.Content.TakeWhile(x => x.EventType != "STANDARD").Sum(x => x.Duration) / 1000),
+                Duration = TimeSpan.FromSeconds((pubInfo.Playlist.Content.FirstOrDefault(x => x.EventType == "STANDARD")?.Duration ?? 0) / 1000),
             };
         }
     }
