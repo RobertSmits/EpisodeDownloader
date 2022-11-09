@@ -1,8 +1,7 @@
-namespace EpisodeDownloader.Downloader.Vier.Models
+namespace EpisodeDownloader.Downloader.Vier.Models;
+
+public class VierConfiguration
 {
-    public class VierConfiguration
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
+    public string Email { get; set; }
+    public string Password { get; set; }
 }

@@ -1,15 +1,14 @@
-namespace EpisodeDownloader.Downloader.Vier
+namespace EpisodeDownloader.Downloader.Vier;
+
+internal static class Extensions
 {
-    internal static class Extensions
+    public static bool ContainsAny(this string haystack, params string[] needles)
     {
-        public static bool ContainsAny(this string haystack, params string[] needles)
+        foreach (string needle in needles)
         {
-            foreach (string needle in needles)
-            {
-                if (haystack.Contains(needle))
-                    return true;
-            }
-            return false;
+            if (haystack.Contains(needle))
+                return true;
         }
+        return false;
     }
 }

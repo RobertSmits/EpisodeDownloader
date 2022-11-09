@@ -1,14 +1,13 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace EpisodeDownloader
+namespace EpisodeDownloader;
+
+public class Program
 {
-    public class Program
+    public static Task Main(string[] args)
     {
-        public static Task Main(string[] args)
-        {
-            var downloader = Bootstrapper.BuildEpisodeDownloader();
-            return downloader.Run(new CancellationToken());
-        }
+        var downloader = Bootstrapper.BuildEpisodeDownloader();
+        return downloader.Run(new CancellationToken());
     }
 }

@@ -5,21 +5,20 @@ using EpisodeDownloader.Downloader.Vrt.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace EpisodeDownloader.Downloader.Vrt
-{
-    public class VrtDiConfig : DiConfigDecorator
-    {
-        public VrtDiConfig(IDiConfig diConfig)
-            : base(diConfig)
-        {
-        }
+namespace EpisodeDownloader.Downloader.Vrt;
 
-        public override void RegisterTypes(IServiceCollection services, IConfiguration configuration)
-        {
-            base.RegisterTypes(services, configuration);
-            services.AddTransient<IEpisodeProvider, VrtEpisodeProvider>();
-            services.AddSingleton<IVrtTokenService, VrtTokenService>();
-            services.Configure<VrtConfiguration>(configuration.GetSection(nameof(VrtEpisodeProvider)));
-        }
+public class VrtDiConfig : DiConfigDecorator
+{
+    public VrtDiConfig(IDiConfig diConfig)
+        : base(diConfig)
+    {
+    }
+
+    public override void RegisterTypes(IServiceCollection services, IConfiguration configuration)
+    {
+        base.RegisterTypes(services, configuration);
+        services.AddTransient<IEpisodeProvider, VrtEpisodeProvider>();
+        services.AddSingleton<IVrtTokenService, VrtTokenService>();
+        services.Configure<VrtConfiguration>(configuration.GetSection(nameof(VrtEpisodeProvider)));
     }
 }

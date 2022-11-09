@@ -1,8 +1,7 @@
-namespace EpisodeDownloader.Downloader.Vrt.Models
+namespace EpisodeDownloader.Downloader.Vrt.Models;
+
+public class VrtConfiguration
 {
-    public class VrtConfiguration
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
+    public string Email { get; set; }
+    public string Password { get; set; }
 }

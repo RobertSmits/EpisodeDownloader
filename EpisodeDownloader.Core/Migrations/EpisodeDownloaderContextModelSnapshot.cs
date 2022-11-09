@@ -4,33 +4,32 @@ using EpisodeDownloader.Core.Models.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace EpisodeDownloader.Core.Migrations
+namespace EpisodeDownloader.Core.Migrations;
+
+[DbContext(typeof(EpisodeDownloaderContext))]
+partial class EpisodeDownloaderContextModelSnapshot : ModelSnapshot
 {
-    [DbContext(typeof(EpisodeDownloaderContext))]
-    partial class EpisodeDownloaderContextModelSnapshot : ModelSnapshot
+    protected override void BuildModel(ModelBuilder modelBuilder)
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "2.1.1-rtm-30846");
+        modelBuilder
+            .HasAnnotation("ProductVersion", "2.1.1-rtm-30846");
 
-            modelBuilder.Entity("EpisodeDownloader.Models.Sqlite.Downloaded", b =>
-                {
-                    b.Property<string>("Name")
-                        .ValueGeneratedOnAdd();
+        modelBuilder.Entity("EpisodeDownloader.Models.Sqlite.Downloaded", b =>
+            {
+                b.Property<string>("Name")
+                    .ValueGeneratedOnAdd();
 
-                    b.Property<DateTime>("DownloadDate");
+                b.Property<DateTime>("DownloadDate");
 
-                    b.Property<string>("EpisodeUrl");
+                b.Property<string>("EpisodeUrl");
 
-                    b.Property<string>("VideoUrl");
+                b.Property<string>("VideoUrl");
 
-                    b.HasKey("Name");
+                b.HasKey("Name");
 
-                    b.ToTable("Downloaded");
-                });
+                b.ToTable("Downloaded");
+            });
 #pragma warning restore 612, 618
-        }
     }
 }

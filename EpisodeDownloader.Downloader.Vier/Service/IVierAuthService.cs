@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace EpisodeDownloader.Downloader.Vier.Service
+namespace EpisodeDownloader.Downloader.Vier.Service;
+
+public interface IVierAuthService
 {
-    public interface IVierAuthService
-    {
-        Task<string> GetIdTokenAsync();
-    }
+    Task<string> GetIdTokenAsync();
 }
